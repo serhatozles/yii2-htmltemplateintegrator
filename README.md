@@ -1,7 +1,5 @@
 HTML Template Integrator
 ========================
-HTML Template Integrator
-
 Installation
 ------------
 
@@ -21,11 +19,25 @@ or add
 
 to the require section of your `composer.json` file.
 
+What can I do?
+-----
+This extension can help you for your html template integration to Yii2.
+After one click, Your asset and layout files will be ready.
 
 Usage
 -----
+Firstly, you have to put your template folder into @app/template.
 
-Once the extension is installed, simply use it in your code by  :
+Example:
+-frontend
+--template
+---yourtemplate
+----css
+----image
+----...
+----index.html
+----...
 
-```php
-<?= \serhatozles\themeintegrator\AutoloadExample::widget(); ?>```
+After, Open to web "integrator/define"
+That's it.
+
