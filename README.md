@@ -29,6 +29,15 @@ Usage
 -----
 Firstly, you have to put your template folder into @app/template.
 
+And you add into @app/config/main.php
+```
+'controllerMap' => [
+    'integrator' => [
+        'class' => 'serhatozles\themeintegrator\Controller',
+    ]
+],
+```
+
 Example:
 
 ```
