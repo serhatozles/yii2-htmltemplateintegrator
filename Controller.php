@@ -12,7 +12,7 @@ class Controller extends BaseController {
     public $assetsList = [];
     public $list = [];
     private $assetTemplate = '/template/Asset.txt';
-    private $assetGeneral = 'App';
+    private $assetGeneral = 'GeneralAsset';
 
     const ASSETNAME = "ASSETNAME";
     const ASSETCSSLIST = "ASSETCSSLIST";
@@ -25,11 +25,13 @@ class Controller extends BaseController {
 
 	    $post = Yii::$app->request->post();
 
+	    $folderName = $post['folder'];
+
 	    $folder = Yii::getAlias('@app/template/') . $post['folder'];
 	    $fileList = $this->getHtml($folder);
 
-//	    for ($i = 0; $i < count($fileList); $i++):
-	    for ($i = 0; $i < 2; $i++):
+	    for ($i = 0; $i < count($fileList); $i++):
+//	    for ($i = 0; $i < 2; $i++):
 
 		$HtmlFile = file_get_contents($folder . '/' . $fileList[$i]);
 		$filename = pathinfo($fileList[$i]);
@@ -58,9 +60,11 @@ class Controller extends BaseController {
 	    $AssetTemplate = $this->changeAsset($AssetTemplate, $this->assetGeneral, ASSETNAME);
 	    $AssetTemplate = $this->changeAsset($AssetTemplate, $rsjustCss, ASSETCSSLIST);
 	    $AssetTemplate = $this->changeAsset($AssetTemplate, $rsjustJs, ASSETJSLIST);
+	    $AssetTemplate = $this->changeAsset($AssetTemplate, 'assets/' . $folderName, ASSETFOLDER);
 
 
-
+	    $fileSaveName = Yii::getAlias('@app/assets/' . $this->assetGeneral . '.php');
+	    file_put_contents($fileSaveName, $AssetTemplate);
 
 	    echo "<textarea style='width:1500px;height:700px;'>";
 	    print_r($AssetTemplate);
