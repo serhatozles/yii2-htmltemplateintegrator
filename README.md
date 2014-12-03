@@ -19,7 +19,7 @@ or add
 
 to the require section of your `composer.json` file.
 
-What can I do?
+What can This Extension do?
 --------------
 This extension can help you for your html template integration to Yii2.
 
