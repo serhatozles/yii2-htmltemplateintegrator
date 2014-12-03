@@ -28,7 +28,7 @@ Usage
 -----
 Firstly, you have to put your template folder into @app/template.
 
-Example
+Example:
 
 ```
 /frontend
@@ -42,5 +42,6 @@ Example
 ```
 
 After, Open to web "integrator/define"
+
 That's it.
 
