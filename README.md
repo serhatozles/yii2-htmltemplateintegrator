@@ -29,7 +29,7 @@ Usage
 Firstly, you have to put your template folder into @app/template.
 
 Example:
-\-frontend
+/frontend
 --template
 ---yourtemplate
 ----css
