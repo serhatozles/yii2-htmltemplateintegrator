@@ -34,6 +34,7 @@ class Controller extends BaseController {
     private $layoutGeneral = 'general';
     public $generatedFiles = [];
     public $appname = "";
+    public $templatePath = "";
 
     const ASSETNAME = "ASSETNAME";
     const ASSETCSSLIST = "ASSETCSSLIST";
@@ -47,6 +48,10 @@ class Controller extends BaseController {
 
     function init() {
 	$this->appname = str_replace('app-', '', Yii::$app->id);
+	$this->templatePath = Yii::getAlias('@app/template/');
+	if(is_dir($this->templatePath)){
+	    yii\helpers\FileHelper::createDirectory($this->templatePath);
+	}
     }
 
     public function actionDefine() {
@@ -59,7 +64,7 @@ class Controller extends BaseController {
 	    $this->assetGeneral = $this->nameGenerator($folderName);
 	    $this->layoutGeneral = strtolower($this->nameGenerator($folderName));
 
-	    $folder = Yii::getAlias('@app/template/') . $post['folder'];
+	    $folder = $this->templatePath . $post['folder'];
 	    $fileList = $this->getHtml($folder);
 
 	    for ($i = 0; $i < count($fileList); $i++):
