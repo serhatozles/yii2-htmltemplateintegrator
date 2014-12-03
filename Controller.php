@@ -13,6 +13,7 @@ namespace serhatozles\themeintegrator;
 use Yii;
 use yii\helpers\Json;
 use yii\helpers\ArrayHelper;
+use yii\helpers\FileHelper;
 use kartik\helpers\Enum;
 use yii\web\Controller as BaseController;
 
@@ -49,8 +50,8 @@ class Controller extends BaseController {
     function init() {
 	$this->appname = str_replace('app-', '', Yii::$app->id);
 	$this->templatePath = Yii::getAlias('@app/template/');
-	if(is_dir($this->templatePath)){
-	    yii\helpers\FileHelper::createDirectory($this->templatePath);
+	if(!is_dir($this->templatePath)){
+	    FileHelper::createDirectory($this->templatePath);
 	}
     }
 
