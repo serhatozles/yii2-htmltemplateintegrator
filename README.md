@@ -20,7 +20,7 @@ or add
 to the require section of your `composer.json` file.
 
 What can I do?
------
+--------------
 This extension can help you for your html template integration to Yii2.
 After one click, Your asset and layout files will be ready.
 
