@@ -3,14 +3,12 @@
  * extension: HTML Template Integrator
  */
 
-namespace frontend\assets;
+/* files: {ASSETFILESLIST} */
+
+namespace {ASSETAPPNAME}\assets;
 
 use yii\web\AssetBundle;
 
-/**
- * @author Qiang Xue <qiang.xue@gmail.com>
- * @since 2.0
- */
 class {ASSETNAME} extends AssetBundle
 {
     public $basePath = '@webroot/{ASSETFOLDER}';

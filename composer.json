@@ -11,7 +11,8 @@
         }
     ],
     "require": {
-        "yiisoft/yii2": "*"
+	"serhatozles/yii2-simplehtmldom": "dev-master",
+	"kartik-v/yii2-helpers": "dev-master"
     },
     "autoload": {
         "psr-4": {
