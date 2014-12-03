@@ -28,7 +28,7 @@ Usage
 -----
 Firstly, you have to put your template folder into @app/template.
 
-Example:
+Example
 /frontend
 --template
 ---yourtemplate
