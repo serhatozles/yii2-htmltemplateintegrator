@@ -5,14 +5,16 @@ namespace serhatozles\themeintegrator;
 use Yii;
 use yii\helpers\Json;
 use yii\helpers\ArrayHelper;
+use kartik\helpers\Enum;
 use yii\web\Controller as BaseController;
 
 class Controller extends BaseController {
 
+    public $generalAssetsList = [];
     public $assetsList = [];
     public $list = [];
     private $assetTemplate = '/template/Asset.txt';
-    private $assetGeneral = 'GeneralAsset';
+    private $assetGeneral = 'General';
 
     const ASSETNAME = "ASSETNAME";
     const ASSETCSSLIST = "ASSETCSSLIST";
@@ -41,34 +43,16 @@ class Controller extends BaseController {
 
 	    endfor;
 
-	    extract($this->assetsList);
+	    $this->generateAssetList($folderName);
 
-	    $run = '$intersectresult = array_intersect($' . implode(',$', $this->list) . ');';
-	    eval($run);
+	    $this->generateAsset();
 
-	    $justCss = $this->getFileType($intersectresult, 'css');
-	    $justJs = $this->getFileType($intersectresult, 'js');
-
-	    $rsjustCss = "\r\n" . implode(',' . "\r\n", array_map(function ($str) {
-				return "'" . $str . "'";
-			    }, $justCss)) . "\r\n";
-	    $rsjustJs = "\r\n" . implode(',' . "\r\n", array_map(function ($str) {
-				return "'" . $str . "'";
-			    }, $justJs)) . "\r\n";
-
-	    $AssetTemplate = $this->TemplateOpen($this->assetTemplate);
-	    $AssetTemplate = $this->changeAsset($AssetTemplate, $this->assetGeneral, ASSETNAME);
-	    $AssetTemplate = $this->changeAsset($AssetTemplate, $rsjustCss, ASSETCSSLIST);
-	    $AssetTemplate = $this->changeAsset($AssetTemplate, $rsjustJs, ASSETJSLIST);
-	    $AssetTemplate = $this->changeAsset($AssetTemplate, 'assets/' . $folderName, ASSETFOLDER);
-
-
-	    $fileSaveName = Yii::getAlias('@app/assets/' . $this->assetGeneral . '.php');
-	    file_put_contents($fileSaveName, $AssetTemplate);
-
-	    echo "<textarea style='width:1500px;height:700px;'>";
-	    print_r($AssetTemplate);
-	    echo "</textarea>";
+//	    echo "<textarea style='width:1500px;height:300px;'>";
+//	    print_r($this->assetsList);
+//	    echo "</textarea>";
+//	    echo "<textarea style='width:1500px;height:300px;'>";
+//	    print_r($this->generalAssetsList);
+//	    echo "</textarea>";
 
 	    return "";
 	}
@@ -77,6 +61,72 @@ class Controller extends BaseController {
 	$themeList = ArrayHelper::map($themeList, 'theme', 'theme');
 
 	return $this->renderFile(__DIR__ . "/views/client.php", ['themeList' => $themeList]);
+    }
+
+    private function assetClear($clearList) {
+
+	foreach ($this->assetsList as $assetKey => $asset):
+
+	    $diff = array_diff($asset, $clearList);
+
+	    if (count($diff) > 0) {
+		$this->assetsList[$assetKey] = $diff;
+	    } else {
+		unset($this->assetsList[$assetKey]);
+		unset($this->list[array_search($assetKey, $this->list)]);
+	    }
+
+	endforeach;
+    }
+
+    private function generateAssetList($folderName) {
+
+	$GenExtra = 0;
+	
+	while (count($this->assetsList) > 0):
+
+	    extract($this->assetsList);
+
+	    $run = '$intersectresult = array_intersect($' . implode(',$', $this->list) . ');';
+	    eval($run);
+
+	    $justCss = $this->getFileType($intersectresult, 'css');
+	    $justJs = $this->getFileType($intersectresult, 'js');
+
+	    $GenExtraTo = $GenExtra != 0 ? $this->nameGenerator(Enum::numToWords($GenExtra)) : '';
+
+	    $this->generalAssetsList[$this->assetGeneral . $GenExtraTo]['files'] = implode(',', $this->list);
+	    $this->generalAssetsList[$this->assetGeneral . $GenExtraTo]['foldername'] = $folderName;
+	    $this->generalAssetsList[$this->assetGeneral . $GenExtraTo]['css'] = $this->getFileType($intersectresult, 'css');
+	    $this->generalAssetsList[$this->assetGeneral . $GenExtraTo]['js'] = $this->getFileType($intersectresult, 'js');
+
+	    $GenExtra++;
+
+	    $this->assetClear($intersectresult);
+
+	endwhile;
+    }
+
+    private function generateAsset() {
+
+	foreach ($this->generalAssetsList as $assetName => $asset):
+	    $rsjustCss = "\r\n" . implode(',' . "\r\n", array_map(function ($str) {
+				return "'" . $str . "'";
+			    }, $asset['css'])) . "\r\n";
+	    $rsjustJs = "\r\n" . implode(',' . "\r\n", array_map(function ($str) {
+				return "'" . $str . "'";
+			    }, $asset['js'])) . "\r\n";
+
+	    $AssetTemplate = $this->TemplateOpen($this->assetTemplate);
+	    $AssetTemplate = $this->changeAsset($AssetTemplate, $assetName . 'Asset', self::ASSETNAME);
+	    $AssetTemplate = $this->changeAsset($AssetTemplate, $rsjustCss, self::ASSETCSSLIST);
+	    $AssetTemplate = $this->changeAsset($AssetTemplate, $rsjustJs, self::ASSETJSLIST);
+	    $AssetTemplate = $this->changeAsset($AssetTemplate, 'assets/' . $asset['foldername'], self::ASSETFOLDER);
+
+
+	    $fileSaveName = Yii::getAlias('@app/assets/' . $assetName . 'Asset.php');
+	    file_put_contents($fileSaveName, $AssetTemplate);
+	endforeach;
     }
 
     function changeAsset($Template, $Change, $To) {
