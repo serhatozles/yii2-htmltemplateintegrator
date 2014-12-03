@@ -29,14 +29,17 @@ Usage
 Firstly, you have to put your template folder into @app/template.
 
 Example
+
+```
 /frontend
---template
----yourtemplate
-----css
-----image
-----...
-----index.html
-----...
+/frontend/template
+/frontend/template/yourtemplate
+/frontend/template/yourtemplate/css
+/frontend/template/yourtemplate/image
+/frontend/template/yourtemplate/...
+/frontend/template/yourtemplate/index.html
+/frontend/template/yourtemplate/...
+```
 
 After, Open to web "integrator/define"
 That's it.
