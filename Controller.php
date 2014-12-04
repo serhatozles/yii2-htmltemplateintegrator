@@ -59,6 +59,10 @@ class Controller extends BaseController {
     const CONTROLLERACTIONLIST = "CONTROLLERACTIONLIST";
 
     public $actionTemplate = '
+    /**
+    * @actionName: {ACTIONNAME}
+    * @layout: {ACTIONLAYOUT}
+    */
     public function action{ACTIONNAME}() {
 	$this->layout = "{ACTIONLAYOUT}";
 	return $this->render("{ACTIONFILENAME}");
@@ -67,7 +71,9 @@ class Controller extends BaseController {
     public $contentSelector = '';
     public $footerSelector = '';
     public $layoutSource = '';
+    public $layoutSourceFirst = '';
     public $folderName = null;
+    public $urlReplace = [];
 
     function init() {
 	$this->appname = str_replace('app-', '', Yii::$app->id);
@@ -107,18 +113,23 @@ class Controller extends BaseController {
 
 		$HtmlFile = file_get_contents($folder . '/' . $fileList[$i]);
 
+		$this->urlReplace[$fileList[$i]] = Url::to(['/' . $folderName . '/' . strtolower($genfilename)]);
+
 		$this->generalContentsList[$genfilename]['source'] = $this->GetContent($HtmlFile);
 		$this->generalContentsList[$genfilename]['file'] = $fileList[$i];
 
 		$this->assetsList[$genfilename] = $this->getAssets($HtmlFile);
 
-		if (empty($this->layoutSource)) {
-		    $this->layoutSource = $this->GenerateLayoutContent($HtmlFile);
+		if (empty($this->layoutSourceFirst)) {
+		    $this->layoutSourceFirst = $HtmlFile;
 		}
 
-		$this->generalActionsList[$genfilename]['actionName'] = $genfilename;
+		$this->generalActionsList[$genfilename]['actionName'] = ucwords(strtolower($genfilename));
+		$this->generalActionsList[$genfilename]['fileName'] = $genfilename;
 
 	    endfor;
+
+	    $this->layoutSource = $this->GenerateLayoutContent($this->layoutSourceFirst);
 
 	    $this->generateAssetList($folderName);
 	    $this->generateLayoutList($folderName);
@@ -156,8 +167,8 @@ class Controller extends BaseController {
 	foreach ($this->generalActionsList as $actionName => $action):
 
 	    $controllerActionList = $this->actionTemplate . "\r\n";
-	    $controllerActionList = str_replace('{' . self::ACTIONNAME . '}', $actionName, $controllerActionList);
-	    $controllerActionList = str_replace('{' . self::ACTIONFILENAME . '}', $actionName, $controllerActionList);
+	    $controllerActionList = str_replace('{' . self::ACTIONNAME . '}', $action['actionName'], $controllerActionList);
+	    $controllerActionList = str_replace('{' . self::ACTIONFILENAME . '}', $action['fileName'], $controllerActionList);
 	    $controllerActionList = str_replace('{' . self::ACTIONLAYOUT . '}', $action['layout'], $controllerActionList);
 	    $controllerActionListResult .= $controllerActionList;
 
@@ -183,8 +194,6 @@ class Controller extends BaseController {
 
 	    $contentSource = $html->find($this->contentSelector, 0)->innertext;
 
-//	    $contentSource = \Mihaeu\HtmlFormatter::format($contentSource);
-
 	    $html->clear();
 	    unset($html);
 
@@ -201,6 +210,8 @@ class Controller extends BaseController {
 	    $headerSource = $html->find($this->headerSelector, 0)->innertext;
 	    $html->find($this->headerSelector, 0)->innertext = '<?php include("' . $this->layoutGeneral . '_header.php"); ?>';
 	    $fileSaveName = Yii::getAlias('@app/views/layouts/' . $this->layoutGeneral . '_header.php');
+	    $headerSource = strtr($headerSource, $this->urlReplace);
+
 	    $this->save($fileSaveName, $headerSource);
 	}
 
@@ -213,6 +224,7 @@ class Controller extends BaseController {
 	    $footerSource = $html->find($this->footerSelector, 0)->innertext;
 	    $html->find($this->footerSelector, 0)->innertext = '<?php include("' . $this->layoutGeneral . '_footer.php"); ?>';
 	    $fileSaveName = Yii::getAlias('@app/views/layouts/' . $this->layoutGeneral . '_footer.php');
+	    $footerSource = strtr($footerSource, $this->urlReplace);
 	    $this->save($fileSaveName, $footerSource);
 	}
 
@@ -225,8 +237,6 @@ class Controller extends BaseController {
 	$html->find('body', 0)->innertext .= '<?php $this->endBody() ?>';
 
 	$htmlresult = $html->save();
-
-	$htmlresult = \Mihaeu\HtmlFormatter::format($htmlresult);
 
 	$htmlresult = '<?php
 use yii\helpers\Html;
@@ -333,6 +343,8 @@ use yii\helpers\Html;
 
 	    $fileSaveName = Yii::getAlias('@app/views/' . $this->layoutGeneral . '/');
 	    $this->folderCreate($fileSaveName);
+	    
+	    $content['source'] = strtr($content['source'], $this->urlReplace);
 
 	    $fileSaveName .= $contentName . '.php';
 	    $fileArray['FileName'] = $fileSaveName;
