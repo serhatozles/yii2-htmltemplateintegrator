@@ -25,6 +25,15 @@ This extension can help you for your html template integration to Yii2.
 
 After one click, Your asset and layout files will be ready.
 
+Properties
+--------------
+1. Assets
+2. Layouts 
+3. Controller
+4. Actions
+
+It's doing all of them.
+
 Usage
 -----
 Firstly, you have to put your template folder into @app/template.
