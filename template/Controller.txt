@@ -1,0 +1,23 @@
+<?php
+
+namespace {APPNAME}\controllers;
+
+use Yii;
+use yii\web\Controller;
+
+/**
+ * extension: HTML Template Integrator
+ */
+
+/**
+ * {CONTROLLERNAME} controller
+ */
+class {CONTROLLERNAME}Controller extends Controller {
+    
+    /**
+     * @inheritdoc
+     */
+
+    {CONTROLLERACTIONLIST}
+
+}

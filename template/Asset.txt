@@ -5,7 +5,7 @@
 
 /* files: {ASSETFILESLIST} */
 
-namespace {ASSETAPPNAME}\assets;
+namespace {APPNAME}\assets;
 
 use yii\web\AssetBundle;
 

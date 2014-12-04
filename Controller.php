@@ -12,6 +12,7 @@ namespace serhatozles\themeintegrator;
 
 use Yii;
 use yii\helpers\Json;
+use serhatozles\simplehtmldom\SimpleHTMLDom;
 use yii\helpers\ArrayHelper;
 use yii\helpers\FileHelper;
 use kartik\helpers\Enum;
@@ -23,6 +24,7 @@ class Controller extends BaseController {
 
     public $generalAssetsList = [];
     public $generalLayoutsList = [];
+    public $generalContentsList = [];
     public $layoutsFirstList = [];
     public $layoutsList = [];
     public $layoutsListAll = [];
@@ -31,28 +33,42 @@ class Controller extends BaseController {
     public $listOriginal = [];
     private $assetTemplate = '/template/Asset.txt';
     private $layoutTemplate = '/template/Layout.txt';
+    private $controllerTemplate = '/template/Controller.txt';
     private $assetGeneral = 'General';
     private $layoutGeneral = 'general';
     public $generatedFiles = [];
     public $appname = "";
     public $templatePath = "";
 
+    const ACTIONNAME = "ACTIONNAME";
+    const ACTIONFILENAME = "ACTIONFILENAME";
     const ASSETNAME = "ASSETNAME";
     const ASSETCSSLIST = "ASSETCSSLIST";
     const ASSETJSLIST = "ASSETJSLIST";
     const ASSETFOLDER = "ASSETFOLDER";
-    const ASSETAPPNAME = "ASSETAPPNAME";
+    const APPNAME = "APPNAME";
     const ASSETFILESLIST = "ASSETFILESLIST";
     const LAYOUTASSETSUSE = "LAYOUTASSETSUSE";
     const LAYOUTASSETSREGISTER = "LAYOUTASSETSREGISTER";
     const LAYOUTFILESLIST = "LAYOUTFILESLIST";
+    const CONTROLLERNAME = "CONTROLLERNAME";
+    const CONTROLLERACTIONLIST = "CONTROLLERACTIONLIST";
+
+    public $actionTemplate = '
+    public function action{ACTIONNAME}() {
+	return $this->render("{ACTIONFILENAME}");
+    }';
+    public $headerSelector = '';
+    public $contentSelector = '';
+    public $footerSelector = '';
+    public $layoutSource = '';
+    public $controllerActionList = '';
+    public $folderName = null;
 
     function init() {
 	$this->appname = str_replace('app-', '', Yii::$app->id);
 	$this->templatePath = Yii::getAlias('@app/template/');
-	if(!is_dir($this->templatePath)){
-	    FileHelper::createDirectory($this->templatePath);
-	}
+	$this->folderCreate($this->templatePath);
     }
 
     public function actionDefine() {
@@ -62,8 +78,13 @@ class Controller extends BaseController {
 	    $post = Yii::$app->request->post();
 
 	    $folderName = $post['folder'];
-	    $this->assetGeneral = $this->nameGenerator($folderName);
-	    $this->layoutGeneral = strtolower($this->nameGenerator($folderName));
+	    $this->folderName = $folderName;
+	    $this->headerSelector = $post['headerselector'];
+	    $this->contentSelector = $post['contentselector'];
+	    $this->footerSelector = $post['footerselector'];
+
+	    $this->assetGeneral = $this->nameGenerator($this->folderName);
+	    $this->layoutGeneral = strtolower($this->nameGenerator($this->folderName));
 
 	    $folder = $this->templatePath . $post['folder'];
 	    $fileList = $this->getHtml($folder);
@@ -72,7 +93,8 @@ class Controller extends BaseController {
 
 		$filename = pathinfo($fileList[$i]);
 		$genfilename = $this->nameGenerator($filename['filename']);
-		if($this->validatesAsInt($genfilename[0])){
+
+		if ($this->validatesAsInt($genfilename[0])) {
 		    $genfilename = 'Html' . $genfilename;
 		}
 
@@ -80,7 +102,20 @@ class Controller extends BaseController {
 		$this->listOriginal[$genfilename] = $fileList[$i];
 
 		$HtmlFile = file_get_contents($folder . '/' . $fileList[$i]);
+
+		$this->generalContentsList[$genfilename]['source'] = $this->GetContent($HtmlFile);
+		$this->generalContentsList[$genfilename]['file'] = $fileList[$i];
+
 		$this->assetsList[$genfilename] = $this->getAssets($HtmlFile);
+
+		if (empty($this->layoutSource)) {
+		    $this->layoutSource = $this->GenerateLayoutContent($HtmlFile);
+		}
+
+		$controllerActionList = $this->actionTemplate . "\r\n";
+		$controllerActionList = str_replace('{' . self::ACTIONNAME . '}', $genfilename, $controllerActionList);
+		$controllerActionList = str_replace('{' . self::ACTIONFILENAME . '}', $genfilename, $controllerActionList);
+		$this->controllerActionList .= $controllerActionList;
 
 	    endfor;
 
@@ -89,6 +124,8 @@ class Controller extends BaseController {
 
 	    $this->generateAsset();
 	    $this->generateLayout();
+	    $this->generateContent();
+	    $this->generateController();
 
 	    $message = "Successful\r\n";
 	    $message .= "You need to put assets files into '<strong>assets/" . $folderName . "</strong>'\r\n";
@@ -107,6 +144,111 @@ class Controller extends BaseController {
 	$themeList = ArrayHelper::map($themeList, 'theme', 'theme');
 
 	return $this->renderFile(__DIR__ . "/views/client.php", ['themeList' => $themeList]);
+    }
+
+    private function generateController() {
+
+	$fileSaveName = Yii::getAlias('@app/controllers/' . $this->assetGeneral . 'Controller.php');
+
+	$controllerActionList = $this->controllerActionList;
+	$ControllerTemplate = $this->TemplateOpen($this->controllerTemplate);
+	$ControllerTemplate = $this->changeAsset($ControllerTemplate, $this->assetGeneral, self::CONTROLLERNAME);
+	$ControllerTemplate = $this->changeAsset($ControllerTemplate, $controllerActionList, self::CONTROLLERACTIONLIST);
+	$ControllerTemplate = $this->changeAsset($ControllerTemplate, $this->appname, self::APPNAME);
+
+	$fileArray['FileName'] = $fileSaveName;
+	$fileArray['Files'] = [$this->assetGeneral . 'Controller.php'];
+	$this->generatedFiles[] = $fileArray;
+	$this->save($fileSaveName, $ControllerTemplate);
+    }
+
+    private function GetContent($HtmlFile) {
+
+	if (!empty($this->contentSelector)) {
+	    $html = SimpleHTMLDom::str_get_html($HtmlFile);
+
+	    $contentSource = $html->find($this->contentSelector, 0)->innertext;
+
+//	    $contentSource = \Mihaeu\HtmlFormatter::format($contentSource);
+
+	    $html->clear();
+	    unset($html);
+
+	    return $contentSource;
+	}
+	return false;
+    }
+
+    private function GenerateLayoutContent($HtmlFile) {
+
+	$html = SimpleHTMLDom::str_get_html($HtmlFile);
+
+	if (!empty($this->headerSelector)) {
+	    $headerSource = $html->find($this->headerSelector, 0)->innertext;
+	    $html->find($this->headerSelector, 0)->innertext = '<?php include("' . $this->layoutGeneral . '_header.php"); ?>';
+	    $fileSaveName = Yii::getAlias('@app/views/layouts/' . $this->layoutGeneral . '_header.php');
+	    $this->save($fileSaveName, $headerSource);
+	}
+
+	if (!empty($this->contentSelector)) {
+//	    $contentSource = $html->find($this->contentSelector, 0)->innertext;
+	    $html->find($this->contentSelector, 0)->innertext = '<?php echo $content ?>';
+	}
+
+	if (!empty($this->footerSelector)) {
+	    $footerSource = $html->find($this->footerSelector, 0)->innertext;
+	    $html->find($this->footerSelector, 0)->innertext = '<?php include("' . $this->layoutGeneral . '_footer.php"); ?>';
+	    $fileSaveName = Yii::getAlias('@app/views/layouts/' . $this->layoutGeneral . '_footer.php');
+	    $this->save($fileSaveName, $footerSource);
+	}
+
+	$html->set_callback('serhatozles\themeintegrator\Controller::StyleRemover');
+
+	$html->find('html', 0)->lang = '<?php echo Yii::$app->language ?>';
+	$html->find('title', 0)->innertext = '<?= Html::encode($this->title) ?>';
+	$html->find('head', 0)->innertext .= '<?php echo Html::csrfMetaTags() ?><?php $this->head() ?>';
+	$html->find('body', 0)->innertext = '<?php $this->beginBody() ?>' . $html->find('body', 0)->innertext;
+	$html->find('body', 0)->innertext .= '<?php $this->endBody() ?>';
+
+	$htmlresult = $html->save();
+
+	$htmlresult = \Mihaeu\HtmlFormatter::format($htmlresult);
+
+	$htmlresult = '<?php
+use yii\helpers\Html;
+{LAYOUTASSETSUSE}
+
+/**
+ * extension: HTML Template Integrator
+ */
+
+/* @var $this \yii\web\View */
+/* @var $content string */
+/* files: {LAYOUTFILESLIST} */
+
+{LAYOUTASSETSREGISTER}
+?>
+<?php $this->beginPage() ?>
+' . $htmlresult;
+
+	$htmlresult .= '<?php $this->endPage() ?>';
+
+	$html->clear();
+	unset($html);
+
+	return $htmlresult;
+    }
+
+    public static function StyleRemover($element) {
+
+	if ($element->tag == 'link') {
+	    $element->outertext = '';
+	}
+
+//	if ($element->tag == 'script' && !empty($element->src)) {
+	if ($element->tag == 'script') {
+	    $element->outertext = '';
+	}
     }
 
     private function generateLayoutList($folderName) {
@@ -150,7 +292,8 @@ class Controller extends BaseController {
 				return $str . 'Asset::register($this);';
 			    }, $layout['assets'])) . "\r\n";
 
-	    $LayoutTemplate = $this->TemplateOpen($this->layoutTemplate);
+//	    $LayoutTemplate = $this->TemplateOpen($this->layoutTemplate);
+	    $LayoutTemplate = $this->layoutSource;
 	    $LayoutTemplate = $this->changeAsset($LayoutTemplate, $AssetsUse, self::LAYOUTASSETSUSE);
 	    $LayoutTemplate = $this->changeAsset($LayoutTemplate, $AssetsRegister, self::LAYOUTASSETSREGISTER);
 	    $LayoutTemplate = $this->changeAsset($LayoutTemplate, implode(',', $layout['filesOriginal']), self::LAYOUTFILESLIST);
@@ -159,7 +302,23 @@ class Controller extends BaseController {
 	    $fileArray['FileName'] = $fileSaveName;
 	    $fileArray['Files'] = $layout['filesOriginal'];
 	    $this->generatedFiles[] = $fileArray;
-	    file_put_contents($fileSaveName, $LayoutTemplate);
+	    $this->save($fileSaveName, $LayoutTemplate);
+
+	endforeach;
+    }
+
+    private function generateContent() {
+
+	foreach ($this->generalContentsList as $contentName => $content):
+
+	    $fileSaveName = Yii::getAlias('@app/views/' . $this->layoutGeneral . '/');
+	    $this->folderCreate($fileSaveName);
+
+	    $fileSaveName .= $contentName . '.php';
+	    $fileArray['FileName'] = $fileSaveName;
+	    $fileArray['Files'] = [$content['file']];
+	    $this->generatedFiles[] = $fileArray;
+	    $this->save($fileSaveName, $content['source']);
 
 	endforeach;
     }
@@ -247,7 +406,7 @@ class Controller extends BaseController {
 	    $AssetTemplate = $this->changeAsset($AssetTemplate, $rsjustCss, self::ASSETCSSLIST);
 	    $AssetTemplate = $this->changeAsset($AssetTemplate, $rsjustJs, self::ASSETJSLIST);
 	    $AssetTemplate = $this->changeAsset($AssetTemplate, 'assets/' . $asset['foldername'], self::ASSETFOLDER);
-	    $AssetTemplate = $this->changeAsset($AssetTemplate, $this->appname, self::ASSETAPPNAME);
+	    $AssetTemplate = $this->changeAsset($AssetTemplate, $this->appname, self::APPNAME);
 	    $AssetTemplate = $this->changeAsset($AssetTemplate, implode(',', $asset['filesOriginal']), self::ASSETFILESLIST);
 
 
@@ -255,7 +414,7 @@ class Controller extends BaseController {
 	    $fileArray['FileName'] = $fileSaveName;
 	    $fileArray['Files'] = $asset['filesOriginal'];
 	    $this->generatedFiles[] = $fileArray;
-	    file_put_contents($fileSaveName, $AssetTemplate);
+	    $this->save($fileSaveName, $AssetTemplate);
 	endforeach;
     }
 
@@ -271,7 +430,7 @@ class Controller extends BaseController {
 
     function getAssets($Source) {
 
-	$html = \serhatozles\simplehtmldom\SimpleHTMLDom::str_get_html($Source);
+	$html = SimpleHTMLDom::str_get_html($Source);
 	$Links = [];
 
 	foreach ($html->find('link[rel=stylesheet]') as $link) {
@@ -283,6 +442,9 @@ class Controller extends BaseController {
 
 	    $Links[] = $link->src;
 	}
+
+	$html->clear();
+	unset($html);
 
 	return array_values(array_filter($Links));
     }
@@ -345,6 +507,16 @@ class Controller extends BaseController {
     function validatesAsInt($number) {
 	$number = filter_var($number, FILTER_VALIDATE_INT);
 	return ($number !== FALSE);
+    }
+
+    private function save($fileSaveName, $AssetTemplate) {
+	return file_put_contents($fileSaveName, $AssetTemplate);
+    }
+
+    private function folderCreate($folderName) {
+	if (!is_dir($folderName)) {
+	    return FileHelper::createDirectory($folderName);
+	}
     }
 
 }
