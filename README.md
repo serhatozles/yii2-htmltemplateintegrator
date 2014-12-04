@@ -32,7 +32,7 @@ Properties
 3. Controller
 4. Actions
 
-It's doing all of them.
+It's making all of them.
 
 Usage
 -----
