@@ -15,6 +15,8 @@ use yii\helpers\Json;
 use serhatozles\simplehtmldom\SimpleHTMLDom;
 use yii\helpers\ArrayHelper;
 use yii\helpers\FileHelper;
+use yii\helpers\Url;
+use yii\helpers\Html;
 use kartik\helpers\Enum;
 use yii\web\Controller as BaseController;
 
@@ -25,6 +27,7 @@ class Controller extends BaseController {
     public $generalAssetsList = [];
     public $generalLayoutsList = [];
     public $generalContentsList = [];
+    public $generalActionsList = [];
     public $layoutsFirstList = [];
     public $layoutsList = [];
     public $layoutsListAll = [];
@@ -42,6 +45,7 @@ class Controller extends BaseController {
 
     const ACTIONNAME = "ACTIONNAME";
     const ACTIONFILENAME = "ACTIONFILENAME";
+    const ACTIONLAYOUT = "ACTIONLAYOUT";
     const ASSETNAME = "ASSETNAME";
     const ASSETCSSLIST = "ASSETCSSLIST";
     const ASSETJSLIST = "ASSETJSLIST";
@@ -56,13 +60,13 @@ class Controller extends BaseController {
 
     public $actionTemplate = '
     public function action{ACTIONNAME}() {
+	$this->layout = "{ACTIONLAYOUT}";
 	return $this->render("{ACTIONFILENAME}");
     }';
     public $headerSelector = '';
     public $contentSelector = '';
     public $footerSelector = '';
     public $layoutSource = '';
-    public $controllerActionList = '';
     public $folderName = null;
 
     function init() {
@@ -112,10 +116,7 @@ class Controller extends BaseController {
 		    $this->layoutSource = $this->GenerateLayoutContent($HtmlFile);
 		}
 
-		$controllerActionList = $this->actionTemplate . "\r\n";
-		$controllerActionList = str_replace('{' . self::ACTIONNAME . '}', $genfilename, $controllerActionList);
-		$controllerActionList = str_replace('{' . self::ACTIONFILENAME . '}', $genfilename, $controllerActionList);
-		$this->controllerActionList .= $controllerActionList;
+		$this->generalActionsList[$genfilename]['actionName'] = $genfilename;
 
 	    endfor;
 
@@ -129,6 +130,8 @@ class Controller extends BaseController {
 
 	    $message = "Successful\r\n";
 	    $message .= "You need to put assets files into '<strong>assets/" . $folderName . "</strong>'\r\n";
+	    $controllerlink = Url::to(['/' . $folderName]);
+	    $message .= "See: " . Html::a($controllerlink, $controllerlink, ['target' => '_blank']) . "\r\n";
 
 	    $results = "";
 	    foreach ($this->generatedFiles as $genFile):
@@ -148,12 +151,23 @@ class Controller extends BaseController {
 
     private function generateController() {
 
+	$controllerActionListResult = '';
+
+	foreach ($this->generalActionsList as $actionName => $action):
+
+	    $controllerActionList = $this->actionTemplate . "\r\n";
+	    $controllerActionList = str_replace('{' . self::ACTIONNAME . '}', $actionName, $controllerActionList);
+	    $controllerActionList = str_replace('{' . self::ACTIONFILENAME . '}', $actionName, $controllerActionList);
+	    $controllerActionList = str_replace('{' . self::ACTIONLAYOUT . '}', $action['layout'], $controllerActionList);
+	    $controllerActionListResult .= $controllerActionList;
+
+	endforeach;
+
 	$fileSaveName = Yii::getAlias('@app/controllers/' . $this->assetGeneral . 'Controller.php');
 
-	$controllerActionList = $this->controllerActionList;
 	$ControllerTemplate = $this->TemplateOpen($this->controllerTemplate);
 	$ControllerTemplate = $this->changeAsset($ControllerTemplate, $this->assetGeneral, self::CONTROLLERNAME);
-	$ControllerTemplate = $this->changeAsset($ControllerTemplate, $controllerActionList, self::CONTROLLERACTIONLIST);
+	$ControllerTemplate = $this->changeAsset($ControllerTemplate, $controllerActionListResult, self::CONTROLLERACTIONLIST);
 	$ControllerTemplate = $this->changeAsset($ControllerTemplate, $this->appname, self::APPNAME);
 
 	$fileArray['FileName'] = $fileSaveName;
@@ -273,6 +287,12 @@ use yii\helpers\Html;
 	    $this->generalLayoutsList[$layoutName]['foldername'] = $folderName;
 	    $this->generalLayoutsList[$layoutName]['filesOriginal'] = $intersectresult;
 	    $this->generalLayoutsList[$layoutName]['assets'] = $this->layoutsList;
+
+	    foreach ($intersectresult as $key => $value):
+
+		$this->generalActionsList[$key]['layout'] = $layoutName;
+
+	    endforeach;
 
 	    $this->layoutClear($intersectresult);
 
