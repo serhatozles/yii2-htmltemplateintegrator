@@ -113,7 +113,7 @@ class Controller extends BaseController {
 
 		$HtmlFile = file_get_contents($folder . '/' . $fileList[$i]);
 
-		$this->urlReplace[$fileList[$i]] = Url::to(['/' . $folderName . '/' . strtolower($genfilename)]);
+		$this->urlReplace[$fileList[$i]] = '<?=Url::to(["/' . $folderName . '/' . strtolower($genfilename) . '"]); ?>';
 
 		$this->generalContentsList[$genfilename]['source'] = $this->GetContent($HtmlFile);
 		$this->generalContentsList[$genfilename]['file'] = $fileList[$i];
@@ -214,11 +214,16 @@ class Controller extends BaseController {
 	    $img->src = Yii::getAlias('@web/assets/' . $this->layoutGeneral . '/') . $img->src;
 	endforeach;
 
+	$includeFileOver = '<?php
+use yii\helpers\Url;
+?>';
+
 	if (!empty($this->headerSelector)) {
 	    $headerSource = $html->find($this->headerSelector, 0)->innertext;
 	    $html->find($this->headerSelector, 0)->innertext = '<?php include("' . $this->layoutGeneral . '_header.php"); ?>';
 	    $fileSaveName = Yii::getAlias('@app/views/layouts/' . $this->layoutGeneral . '_header.php');
 	    $headerSource = strtr($headerSource, $this->urlReplace);
+	    $headerSource = $includeFileOver . $headerSource;
 
 	    $this->save($fileSaveName, $headerSource);
 	}
@@ -233,6 +238,8 @@ class Controller extends BaseController {
 	    $html->find($this->footerSelector, 0)->innertext = '<?php include("' . $this->layoutGeneral . '_footer.php"); ?>';
 	    $fileSaveName = Yii::getAlias('@app/views/layouts/' . $this->layoutGeneral . '_footer.php');
 	    $footerSource = strtr($footerSource, $this->urlReplace);
+	    $footerSource = $includeFileOver . $footerSource;
+
 	    $this->save($fileSaveName, $footerSource);
 	}
 
@@ -353,6 +360,17 @@ use yii\helpers\Html;
 	    $this->folderCreate($fileSaveName);
 
 	    $content['source'] = strtr($content['source'], $this->urlReplace);
+
+	    $OverContent = '<?php
+use yii\helpers\Html;
+use yii\helpers\Url;
+
+/* @var $this yii\web\View */
+$this->title = "' . $contentName . '";
+?>
+';
+
+	    $content['source'] = $OverContent . $content['source'];
 
 	    $fileSaveName .= $contentName . '.php';
 	    $fileArray['FileName'] = $fileSaveName;
