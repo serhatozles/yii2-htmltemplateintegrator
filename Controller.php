@@ -88,70 +88,83 @@ class Controller extends BaseController {
 	    $post = Yii::$app->request->post();
 
 	    $folderName = $post['folder'];
-	    $this->folderName = $folderName;
-	    $this->headerSelector = $post['headerselector'];
-	    $this->contentSelector = $post['contentselector'];
-	    $this->footerSelector = $post['footerselector'];
+	    if ($post['step'] == 1) {
+		$folder = $this->templatePath . $folderName;
+		$fileList = $this->getHtml($folder);
 
-	    $this->assetGeneral = $this->nameGenerator($this->folderName);
-	    $this->layoutGeneral = strtolower($this->nameGenerator($this->folderName));
+		$fileList = array_combine($fileList, $fileList);
 
-	    $folder = $this->templatePath . $post['folder'];
-	    $fileList = $this->getHtml($folder);
+		return $this->renderFile(__DIR__ . "/views/file.php", ['fileList' => $fileList, 'folder' => $folderName]);
+	    } elseif ($post['step'] == 2) {
 
-	    for ($i = 0; $i < count($fileList); $i++):
+		$fileName = $post['file'];
+		$this->folderName = $folderName;
+		$this->headerSelector = $post['headerselector'];
+		$this->contentSelector = $post['contentselector'];
+		$this->footerSelector = $post['footerselector'];
 
-		$filename = pathinfo($fileList[$i]);
-		$genfilename = $this->nameGenerator($filename['filename']);
+		$this->assetGeneral = $this->nameGenerator($this->folderName);
+		$this->layoutGeneral = strtolower($this->nameGenerator($this->folderName));
 
-		if ($this->validatesAsInt($genfilename[0])) {
-		    $genfilename = 'Html' . $genfilename;
-		}
+		$folder = $this->templatePath . $post['folder'];
+		$fileList = $this->getHtml($folder);
 
-		$this->list[] = $genfilename;
-		$this->listOriginal[$genfilename] = $fileList[$i];
+		for ($i = 0; $i < count($fileList); $i++):
 
-		$HtmlFile = file_get_contents($folder . '/' . $fileList[$i]);
+		    $filename = pathinfo($fileList[$i]);
 
-		$this->urlReplace[$fileList[$i]] = '<?=Url::to(["/' . $folderName . '/' . strtolower($genfilename) . '"]); ?>';
+		    $HtmlFile = file_get_contents($folder . '/' . $fileList[$i]);
 
-		$this->generalContentsList[$genfilename]['source'] = $this->GetContent($HtmlFile);
-		$this->generalContentsList[$genfilename]['file'] = $fileList[$i];
+		    $genfilename = $this->nameGenerator($filename['filename']);
 
-		$this->assetsList[$genfilename] = $this->getAssets($HtmlFile);
+		    if ($this->validatesAsInt($genfilename[0])) {
+			$genfilename = 'Html' . $genfilename;
+		    }
 
-		if (empty($this->layoutSourceFirst)) {
-		    $this->layoutSourceFirst = $HtmlFile;
-		}
+		    $this->list[] = $genfilename;
+		    $this->listOriginal[$genfilename] = $fileList[$i];
 
-		$this->generalActionsList[$genfilename]['actionName'] = ucwords(strtolower($genfilename));
-		$this->generalActionsList[$genfilename]['fileName'] = $genfilename;
+		    $this->urlReplace[$fileList[$i]] = '<?=Url::to(["/' . $folderName . '/' . strtolower($genfilename) . '"]); ?>';
 
-	    endfor;
+		    $this->generalContentsList[$genfilename]['source'] = $this->GetContent($HtmlFile);
+		    $this->generalContentsList[$genfilename]['file'] = $fileList[$i];
 
-	    $this->layoutSource = $this->GenerateLayoutContent($this->layoutSourceFirst);
+		    $this->assetsList[$genfilename]['fileName'] = $fileList[$i];
+		    $this->assetsList[$genfilename]['asset'] = $this->getAssets($HtmlFile);
 
-	    $this->generateAssetList($folderName);
-	    $this->generateLayoutList($folderName);
+		    if (empty($this->layoutSourceFirst) && $fileName == $fileList[$i]) {
+			$this->layoutSourceFirst = $HtmlFile;
+		    }
 
-	    $this->generateAsset();
-	    $this->generateLayout();
-	    $this->generateContent();
-	    $this->generateController();
+		    $this->generalActionsList[$genfilename]['actionName'] = ucwords(strtolower($genfilename));
+		    $this->generalActionsList[$genfilename]['fileName'] = $genfilename;
 
-	    $message = "Successful\r\n";
-	    $message .= "You need to put assets files into '<strong>assets/" . $folderName . "</strong>'\r\n";
-	    $controllerlink = Url::to(['/' . $folderName]);
-	    $message .= "See: " . Html::a($controllerlink, $controllerlink, ['target' => '_blank']) . "\r\n";
+		endfor;
 
-	    $results = "";
-	    foreach ($this->generatedFiles as $genFile):
-		$results .= $genFile['FileName'] . " Generated\r\n";
-		$results .= "For This:\r\n" . implode(" , ", $genFile['Files']) . "\r\n";
-		$results .= str_repeat("-", 30) . "\r\n\r\n";
-	    endforeach;
+		$this->layoutSource = $this->GenerateLayoutContent($this->layoutSourceFirst);
 
-	    return $this->renderFile(__DIR__ . "/views/results.php", ['results' => $results, 'message' => $message]);
+		$this->generateAssetList($folderName);
+		$this->generateLayoutList($folderName);
+
+		$this->generateAsset();
+		$this->generateLayout();
+		$this->generateContent();
+		$this->generateController();
+
+		$message = "Successful\r\n";
+		$message .= "You need to put assets files into '<strong>assets/" . $folderName . "</strong>'\r\n";
+		$controllerlink = Url::to(['/' . $folderName]);
+		$message .= "See: " . Html::a($controllerlink, $controllerlink, ['target' => '_blank']) . "\r\n";
+
+		$results = "";
+		foreach ($this->generatedFiles as $genFile):
+		    $results .= $genFile['FileName'] . " Generated\r\n";
+		    $results .= "For This:\r\n" . implode(" , ", $genFile['Files']) . "\r\n";
+		    $results .= str_repeat("-", 30) . "\r\n\r\n";
+		endforeach;
+
+		return $this->renderFile(__DIR__ . "/views/results.php", ['results' => $results, 'message' => $message]);
+	    }
 	}
 
 	$themeList = $this->dirToArray(Yii::getAlias('@app/template'));
@@ -192,9 +205,32 @@ class Controller extends BaseController {
 	if (!empty($this->contentSelector)) {
 	    $html = SimpleHTMLDom::str_get_html($HtmlFile);
 
+	    if (!empty($this->headerSelector)) {
+		$html->find($this->headerSelector, 0)->innertext = '';
+	    }
+
+	    if (!empty($this->footerSelector)) {
+		$html->find($this->footerSelector, 0)->innertext = '';
+	    }
+
 	    foreach ($html->find('img') as $img):
 		$img->src = Yii::getAlias('@web/assets/' . $this->layoutGeneral . '/') . $img->src;
 	    endforeach;
+
+//	    $contentSelecterinLenght = 0;
+//	    $contentSource = '';
+//	    
+//	    foreach($html->find($this->contentSelector) as $contentselect):
+//		
+//		$contentinside = $contentselect->innertext;
+//		$contentlenght = mb_strlen($contentinside,'UTF-8');
+//		
+//		if($contentlenght > $contentSelecterinLenght){
+//		    $contentSource = $contentinside;
+//		    $contentSelecterinLenght = $contentlenght;
+//		}
+//		
+//	    endforeach;
 
 	    $contentSource = $html->find($this->contentSelector, 0)->innertext;
 
@@ -290,42 +326,6 @@ use yii\helpers\Html;
 	}
     }
 
-    private function generateLayoutList($folderName) {
-
-	$GenExtra = 0;
-
-	while (count($this->layoutsFirstList) > 0):
-
-	    $GenExtraTo = $GenExtra != 0 ? $this->nameGenerator(Enum::numToWords($GenExtra)) : '';
-
-	    $layoutName = $this->layoutGeneral . $GenExtraTo;
-
-	    extract($this->layoutsFirstList);
-
-	    if (count($this->layoutsFirstList) > 1):
-		$run = '$intersectresult = array_intersect($' . implode(',$', $this->layoutsList) . ');';
-		eval($run);
-	    else:
-		$intersectresult = $this->layoutsFirstList[$this->layoutsList[0]];
-	    endif;
-
-	    $this->generalLayoutsList[$layoutName]['foldername'] = $folderName;
-	    $this->generalLayoutsList[$layoutName]['filesOriginal'] = $intersectresult;
-	    $this->generalLayoutsList[$layoutName]['assets'] = $this->layoutsList;
-
-	    foreach ($intersectresult as $key => $value):
-
-		$this->generalActionsList[$key]['layout'] = $layoutName;
-
-	    endforeach;
-
-	    $this->layoutClear($intersectresult);
-
-	    $GenExtra++;
-
-	endwhile;
-    }
-
     private function generateLayout() {
 
 	foreach ($this->generalLayoutsList as $layoutName => $layout):
@@ -381,72 +381,84 @@ $this->title = "' . $contentName . '";
 	endforeach;
     }
 
-    private function layoutClear($clearList) {
+    private function generateLayoutList($folderName) {
 
-	foreach ($this->layoutsFirstList as $layoutKey => $layout):
+	$GenExtra = 0;
 
-	    $diff = array_diff($layout, $clearList);
+	$newLayouts = [];
+	$newLayoutsList = [];
 
-	    if (count($diff) > 0) {
-		$this->layoutsFirstList[$layoutKey] = $diff;
-	    } else {
-		unset($this->layoutsFirstList[$layoutKey]);
-		unset($this->layoutsList[array_search($layoutKey, $this->layoutsList)]);
-	    }
-
+	foreach ($this->layoutsFirstList as $layoutName => $layout):
+	    foreach ($layout['filesOriginal'] as $key => $layoutFile):
+		$newLayouts[$layoutFile]['assets'][] = $layoutName;
+		$newLayouts[$layoutFile]['files'] = $layout['files'][$key];
+	    endforeach;
 	endforeach;
-    }
-
-    private function assetClear($clearList) {
-
-	foreach ($this->assetsList as $assetKey => $asset):
-
-	    $diff = array_diff($asset, $clearList);
-
-	    if (count($diff) > 0) {
-		$this->assetsList[$assetKey] = $diff;
-	    } else {
-		unset($this->assetsList[$assetKey]);
-		unset($this->list[array_search($assetKey, $this->list)]);
-		unset($this->listOriginal[$assetKey]);
-	    }
-
+	
+	foreach ($newLayouts as $file => $layout):
+	    $newLayoutsList[serialize($layout['assets'])]['layoutFile'][$layout['files']] = $file;
+	    $newLayoutsList[serialize($layout['assets'])]['assets'] = $layout['assets'];
 	endforeach;
+
+	foreach ($newLayoutsList as $layout):
+	    $GenExtraTo = $GenExtra != 0 ? $this->nameGenerator(Enum::numToWords($GenExtra)) : '';
+	    $layoutName = $this->layoutGeneral . $GenExtraTo;
+	    
+	    $this->generalLayoutsList[$layoutName]['foldername'] = $folderName;
+	    $this->generalLayoutsList[$layoutName]['filesOriginal'] = $layout['layoutFile'];
+	    $this->generalLayoutsList[$layoutName]['assets'] = $layout['assets'];
+	    
+	    foreach ($layout['layoutFile'] as $key => $value):
+
+		$this->generalActionsList[$key]['layout'] = $layoutName;
+
+	    endforeach;
+	    
+	    $GenExtra++;
+	endforeach;
+
     }
 
     private function generateAssetList($folderName) {
 
 	$GenExtra = 0;
 
-	while (count($this->assetsList) > 0):
+	$newAssets = [];
+	$newAssetsList = [];
 
-	    extract($this->assetsList);
+	foreach ($this->assetsList as $assetName => $asset):
+	    foreach ($asset['asset'] as $assetFile):
+		$newAssets[$assetFile]['files'][] = $assetName;
+		$newAssets[$assetFile]['filesOriginal'][] = $asset['fileName'];
+	    endforeach;
+	endforeach;
 
-	    $run = '$intersectresult = array_intersect($' . implode(',$', $this->list) . ');';
-	    eval($run);
+	foreach ($newAssets as $file => $asset):
+	    $newAssetsList[serialize($asset['files'])]['assetFile'][] = $file;
+	    $newAssetsList[serialize($asset['files'])]['files'] = $asset['files'];
+	    $newAssetsList[serialize($asset['files'])]['filesOriginal'] = $asset['filesOriginal'];
+	endforeach;
 
-	    $justCss = $this->getFileType($intersectresult, 'css');
-	    $justJs = $this->getFileType($intersectresult, 'js');
-
+	foreach ($newAssetsList as $asset):
 	    $GenExtraTo = $GenExtra != 0 ? $this->nameGenerator(Enum::numToWords($GenExtra)) : '';
+
+	    $justCss = $this->getFileType($asset['assetFile'], 'css');
+	    $justJs = $this->getFileType($asset['assetFile'], 'js');
 
 	    $assetName = $this->assetGeneral . $GenExtraTo;
 
-	    $this->generalAssetsList[$assetName]['files'] = implode(',', $this->list);
-	    $this->generalAssetsList[$assetName]['filesOriginal'] = $this->listOriginal;
+	    $this->generalAssetsList[$assetName]['files'] = implode(',', $asset['files']);
+	    $this->generalAssetsList[$assetName]['filesOriginal'] = $asset['filesOriginal'];
 	    $this->generalAssetsList[$assetName]['foldername'] = $folderName;
-	    $this->generalAssetsList[$assetName]['css'] = $this->getFileType($intersectresult, 'css');
-	    $this->generalAssetsList[$assetName]['js'] = $this->getFileType($intersectresult, 'js');
+	    $this->generalAssetsList[$assetName]['css'] = $justCss;
+	    $this->generalAssetsList[$assetName]['js'] = $justJs;
 
-	    $this->layoutsFirstList[$assetName] = $this->listOriginal;
-	    $this->layoutsList[] = $assetName;
-	    $this->layoutsListAll = ArrayHelper::merge($this->layoutsListAll, $this->list);
+	    $this->layoutsFirstList[$assetName]['filesOriginal'] = $asset['filesOriginal'];
+	    $this->layoutsFirstList[$assetName]['files'] = $asset['files'];
 
 	    $GenExtra++;
+	endforeach;
 
-	    $this->assetClear($intersectresult);
-
-	endwhile;
     }
 
     private function generateAsset() {
