@@ -192,6 +192,10 @@ class Controller extends BaseController {
 	if (!empty($this->contentSelector)) {
 	    $html = SimpleHTMLDom::str_get_html($HtmlFile);
 
+	    foreach ($html->find('img') as $img):
+		$img->src = Yii::getAlias('@web/assets/' . $this->layoutGeneral . '/') . $img->src;
+	    endforeach;
+
 	    $contentSource = $html->find($this->contentSelector, 0)->innertext;
 
 	    $html->clear();
@@ -205,6 +209,10 @@ class Controller extends BaseController {
     private function GenerateLayoutContent($HtmlFile) {
 
 	$html = SimpleHTMLDom::str_get_html($HtmlFile);
+
+	foreach ($html->find('img') as $img):
+	    $img->src = Yii::getAlias('@web/assets/' . $this->layoutGeneral . '/') . $img->src;
+	endforeach;
 
 	if (!empty($this->headerSelector)) {
 	    $headerSource = $html->find($this->headerSelector, 0)->innertext;
@@ -343,7 +351,7 @@ use yii\helpers\Html;
 
 	    $fileSaveName = Yii::getAlias('@app/views/' . $this->layoutGeneral . '/');
 	    $this->folderCreate($fileSaveName);
-	    
+
 	    $content['source'] = strtr($content['source'], $this->urlReplace);
 
 	    $fileSaveName .= $contentName . '.php';
