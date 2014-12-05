@@ -153,7 +153,7 @@ class Controller extends BaseController {
 
 		$message = "Successful\r\n";
 		$message .= "You need to put assets files into '<strong>assets/" . $folderName . "</strong>'\r\n";
-		$controllerlink = Url::to(['/' . $folderName]);
+		$controllerlink = Url::to(['/' . strtolower($folderName)]);
 		$message .= "See: " . Html::a($controllerlink, $controllerlink, ['target' => '_blank']) . "\r\n";
 
 		$results = "";
