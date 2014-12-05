@@ -217,6 +217,14 @@ class Controller extends BaseController {
 		$img->src = Yii::getAlias('@web/assets/' . $this->layoutGeneral . '/') . $img->src;
 	    endforeach;
 
+	    $contentJavascript = [];
+
+	    foreach ($html->find('script') as $script):
+		if (!$script->src) {
+		    $contentJavascript[] = $script->innertext;
+		}
+	    endforeach;
+
 //	    $contentSelecterinLenght = 0;
 //	    $contentSource = '';
 //	    
@@ -232,7 +240,8 @@ class Controller extends BaseController {
 //		
 //	    endforeach;
 
-	    $contentSource = $html->find($this->contentSelector, 0)->innertext;
+	    $contentSource['source'] = $html->find($this->contentSelector, 0)->innertext;
+	    $contentSource['javascript'] = $contentJavascript;
 
 	    $html->clear();
 	    unset($html);
@@ -359,7 +368,7 @@ use yii\helpers\Html;
 	    $fileSaveName = Yii::getAlias('@app/views/' . $this->layoutGeneral . '/');
 	    $this->folderCreate($fileSaveName);
 
-	    $content['source'] = strtr($content['source'], $this->urlReplace);
+	    $content['source']['source'] = strtr($content['source']['source'], $this->urlReplace);
 
 	    $OverContent = '<?php
 use yii\helpers\Html;
@@ -367,16 +376,22 @@ use yii\helpers\Url;
 
 /* @var $this yii\web\View */
 $this->title = "' . $contentName . '";
+    ';
+	    foreach($content['source']['javascript'] as $javascript):
+		$javascriptInside = '$this->registerJs("' . addslashes($javascript) . '",\yii\web\View::POS_END);';
+	    $OverContent .= $javascriptInside;
+	    endforeach;
+	    $OverContent .= '
 ?>
 ';
 
-	    $content['source'] = $OverContent . $content['source'];
+	    $content['source']['source'] = $OverContent . $content['source']['source'];
 
 	    $fileSaveName .= $contentName . '.php';
 	    $fileArray['FileName'] = $fileSaveName;
 	    $fileArray['Files'] = [$content['file']];
 	    $this->generatedFiles[] = $fileArray;
-	    $this->save($fileSaveName, $content['source']);
+	    $this->save($fileSaveName, $content['source']['source']);
 
 	endforeach;
     }
@@ -394,7 +409,7 @@ $this->title = "' . $contentName . '";
 		$newLayouts[$layoutFile]['files'] = $layout['files'][$key];
 	    endforeach;
 	endforeach;
-	
+
 	foreach ($newLayouts as $file => $layout):
 	    $newLayoutsList[serialize($layout['assets'])]['layoutFile'][$layout['files']] = $file;
 	    $newLayoutsList[serialize($layout['assets'])]['assets'] = $layout['assets'];
@@ -403,20 +418,19 @@ $this->title = "' . $contentName . '";
 	foreach ($newLayoutsList as $layout):
 	    $GenExtraTo = $GenExtra != 0 ? $this->nameGenerator(Enum::numToWords($GenExtra)) : '';
 	    $layoutName = $this->layoutGeneral . $GenExtraTo;
-	    
+
 	    $this->generalLayoutsList[$layoutName]['foldername'] = $folderName;
 	    $this->generalLayoutsList[$layoutName]['filesOriginal'] = $layout['layoutFile'];
 	    $this->generalLayoutsList[$layoutName]['assets'] = $layout['assets'];
-	    
+
 	    foreach ($layout['layoutFile'] as $key => $value):
 
 		$this->generalActionsList[$key]['layout'] = $layoutName;
 
 	    endforeach;
-	    
+
 	    $GenExtra++;
 	endforeach;
-
     }
 
     private function generateAssetList($folderName) {
@@ -458,7 +472,6 @@ $this->title = "' . $contentName . '";
 
 	    $GenExtra++;
 	endforeach;
-
     }
 
     private function generateAsset() {
