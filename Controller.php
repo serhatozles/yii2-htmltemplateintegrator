@@ -153,7 +153,7 @@ class Controller extends BaseController {
 
 		$message = "Successful\r\n";
 		$message .= "You need to put assets files into '<strong>assets/" . $folderName . "</strong>'\r\n";
-		$controllerlink = Url::to(['/' . strtolower($folderName)]);
+		$controllerlink = Url::to(['/' . $folderName]);
 		$message .= "See: " . Html::a($controllerlink, $controllerlink, ['target' => '_blank']) . "\r\n";
 
 		$results = "";
@@ -205,11 +205,11 @@ class Controller extends BaseController {
 	if (!empty($this->contentSelector)) {
 	    $html = SimpleHTMLDom::str_get_html($HtmlFile);
 
-	    if (!empty($this->headerSelector)) {
+	    if (!empty($this->headerSelector) && !empty($html->find($this->headerSelector, 0)->innertext)) {
 		$html->find($this->headerSelector, 0)->innertext = '';
 	    }
 
-	    if (!empty($this->footerSelector)) {
+	    if (!empty($this->footerSelector) && !empty($html->find($this->footerSelector, 0)->innertext)) {
 		$html->find($this->footerSelector, 0)->innertext = '';
 	    }
 
