@@ -20,6 +20,8 @@ use yii\helpers\Html;
 use kartik\helpers\Enum;
 use yii\web\Controller as BaseController;
 
+include(__DIR__ . '/ganon/ganon.php');
+
 set_time_limit(0);
 
 class Controller extends BaseController {
@@ -240,15 +242,30 @@ class Controller extends BaseController {
 //		
 //	    endforeach;
 
-	    $contentSource['source'] = $html->find($this->contentSelector, 0)->innertext;
-	    $contentSource['javascript'] = $contentJavascript;
 
+
+	    $contentSource['source'] = $html->find($this->contentSelector, 0)->innertext;
+	    
 	    $html->clear();
 	    unset($html);
+	    
+	    $contentSource['javascript'] = $contentJavascript;
+	    $contentSource['source'] = $this->beautifyHtml($contentSource['source']);
+
 
 	    return $contentSource;
 	}
 	return false;
+    }
+
+    private function beautifyHtml($source) {
+	$html = str_get_dom($source);
+	ob_start();
+	dom_format($html, array('attributes_case' => CASE_LOWER));
+	echo $html;
+	$source = ob_get_contents();
+	ob_end_clean();
+	return $source;
     }
 
     private function GenerateLayoutContent($HtmlFile) {
@@ -267,6 +284,8 @@ use yii\helpers\Url;
 	    $headerSource = $html->find($this->headerSelector, 0)->innertext;
 	    $html->find($this->headerSelector, 0)->innertext = '<?php include("' . $this->layoutGeneral . '_header.php"); ?>';
 	    $fileSaveName = Yii::getAlias('@app/views/layouts/' . $this->layoutGeneral . '_header.php');
+//	    $headerSource = \serhatozles\htmlawed\htmLawed::htmLawed($headerSource, array('tidy'=>'1t1')); 
+	    $headerSource = $this->beautifyHtml($headerSource);
 	    $headerSource = strtr($headerSource, $this->urlReplace);
 	    $headerSource = $includeFileOver . $headerSource;
 
@@ -280,7 +299,9 @@ use yii\helpers\Url;
 
 	if (!empty($this->footerSelector)) {
 	    $footerSource = $html->find($this->footerSelector, 0)->innertext;
+//	    $footerSource = \serhatozles\htmlawed\htmLawed::htmLawed($footerSource, array('tidy' => '1t1'));
 	    $html->find($this->footerSelector, 0)->innertext = '<?php include("' . $this->layoutGeneral . '_footer.php"); ?>';
+	    $footerSource = $this->beautifyHtml($footerSource);
 	    $fileSaveName = Yii::getAlias('@app/views/layouts/' . $this->layoutGeneral . '_footer.php');
 	    $footerSource = strtr($footerSource, $this->urlReplace);
 	    $footerSource = $includeFileOver . $footerSource;
@@ -377,9 +398,9 @@ use yii\helpers\Url;
 /* @var $this yii\web\View */
 $this->title = "' . $contentName . '";
     ';
-	    foreach($content['source']['javascript'] as $javascript):
+	    foreach ($content['source']['javascript'] as $javascript):
 		$javascriptInside = '$this->registerJs("' . addslashes($javascript) . '",\yii\web\View::POS_END);';
-	    $OverContent .= $javascriptInside;
+		$OverContent .= $javascriptInside;
 	    endforeach;
 	    $OverContent .= '
 ?>
