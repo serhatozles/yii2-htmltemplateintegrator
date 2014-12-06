@@ -12,8 +12,7 @@
     ],
     "require": {
 	"serhatozles/yii2-simplehtmldom": "dev-master",
-	"kartik-v/yii2-helpers": "dev-master",
-	"serhatozles/yii2-htmlawed": "*"
+	"kartik-v/yii2-helpers": "dev-master"
     },
     "autoload": {
         "psr-4": {
