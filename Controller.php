@@ -285,7 +285,7 @@ use yii\helpers\Url;
 
 	if (!empty($this->headerSelector)) {
 	    $headerSource = $html->find($this->headerSelector, 0)->innertext;
-	    $html->find($this->headerSelector, 0)->innertext = '<?php include("' . $this->layoutGeneral . '_header.php"); ?>';
+	    $html->find($this->headerSelector, 0)->innertext = '{HEADERINCLUDE}';
 	    $fileSaveName = Yii::getAlias('@app/views/layouts/' . $this->layoutGeneral . '_header.php');
 //	    $headerSource = \serhatozles\htmlawed\htmLawed::htmLawed($headerSource, array('tidy'=>'1t1')); 
 	    $headerSource = $this->beautifyHtml($headerSource);
@@ -297,13 +297,12 @@ use yii\helpers\Url;
 
 	if (!empty($this->contentSelector)) {
 //	    $contentSource = $html->find($this->contentSelector, 0)->innertext;
-	    $html->find($this->contentSelector, 0)->innertext = '<?php echo $content ?>';
+	    $html->find($this->contentSelector, 0)->innertext = '{CONTENT}';
 	}
 
 	if (!empty($this->footerSelector)) {
 	    $footerSource = $html->find($this->footerSelector, 0)->innertext;
-//	    $footerSource = \serhatozles\htmlawed\htmLawed::htmLawed($footerSource, array('tidy' => '1t1'));
-	    $html->find($this->footerSelector, 0)->innertext = '<?php include("' . $this->layoutGeneral . '_footer.php"); ?>';
+	    $html->find($this->footerSelector, 0)->innertext = '{INCLUDEFOOTER}';
 	    $footerSource = $this->beautifyHtml($footerSource);
 	    $fileSaveName = Yii::getAlias('@app/views/layouts/' . $this->layoutGeneral . '_footer.php');
 	    $footerSource = strtr($footerSource, $this->urlReplace);
@@ -312,19 +311,25 @@ use yii\helpers\Url;
 	    $this->save($fileSaveName, $footerSource);
 	}
 
-	$contentSource['source'] = $this->beautifyHtml($contentSource['source']);
 
 	$html->set_callback('serhatozles\themeintegrator\Controller::StyleRemover');
 
-	$html->find('html', 0)->lang = '<?php echo Yii::$app->language ?>';
-	$html->find('title', 0)->innertext = '<?= Html::encode($this->title) ?>';
-	$html->find('head', 0)->innertext .= '<?php echo Html::csrfMetaTags() ?><?php $this->head() ?>';
-	$html->find('body', 0)->innertext = '<?php $this->beginBody() ?>' . $html->find('body', 0)->innertext;
-	$html->find('body', 0)->innertext .= '<?php $this->endBody() ?>';
+	$html->find('html', 0)->lang = '{HTMLLANG}';
+	$html->find('title', 0)->innertext = '{HTMLTITLE}';
+	$html->find('head', 0)->innertext .= '{CSRFMETA}';
+	$html->find('body', 0)->innertext = '{BEGINBODY}' . $html->find('body', 0)->innertext;
+	$html->find('body', 0)->innertext .= '{ENDBODY}';
 
 	$htmlresult = $html->save();
-	$htmlresult = $htmlresult;
-
+	$htmlresult = $this->beautifyHtml($htmlresult);
+	$htmlresult = str_replace('{HEADERINCLUDE}','<?php include("' . $this->layoutGeneral . '_header.php"); ?>',$htmlresult);
+	$htmlresult = str_replace('{CONTENT}','<?php echo $content ?>',$htmlresult);
+	$htmlresult = str_replace('{INCLUDEFOOTER}','<?php include("' . $this->layoutGeneral . '_footer.php"); ?>',$htmlresult);
+	$htmlresult = str_replace('{HTMLLANG}','<?php echo Yii::$app->language ?>',$htmlresult);
+	$htmlresult = str_replace('{HTMLTITLE}','<?= Html::encode($this->title) ?>',$htmlresult);
+	$htmlresult = str_replace('{CSRFMETA}','<?php echo Html::csrfMetaTags() ?><?php $this->head() ?>',$htmlresult);
+	$htmlresult = str_replace('{BEGINBODY}','<?php $this->beginBody() ?>',$htmlresult);
+	$htmlresult = str_replace('{ENDBODY}','<?php $this->endBody() ?>',$htmlresult);
 	$htmlresult = '<?php
 use yii\helpers\Html;
 {LAYOUTASSETSUSE}
