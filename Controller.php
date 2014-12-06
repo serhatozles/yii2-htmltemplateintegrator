@@ -322,9 +322,9 @@ use yii\helpers\Url;
 
 	$htmlresult = $html->save();
 	$htmlresult = $this->beautifyHtml($htmlresult);
-	$htmlresult = str_replace('{HEADERINCLUDE}','<?php include("' . $this->layoutGeneral . '_header.php"); ?>',$htmlresult);
+	$htmlresult = str_replace('{HEADERINCLUDE}','<?php echo $this->render("' . $this->layoutGeneral . '_header"); ?>',$htmlresult);
 	$htmlresult = str_replace('{CONTENT}','<?php echo $content ?>',$htmlresult);
-	$htmlresult = str_replace('{INCLUDEFOOTER}','<?php include("' . $this->layoutGeneral . '_footer.php"); ?>',$htmlresult);
+	$htmlresult = str_replace('{INCLUDEFOOTER}','<?php echo $this->render("' . $this->layoutGeneral . '_footer"); ?>',$htmlresult);
 	$htmlresult = str_replace('{HTMLLANG}','<?php echo Yii::$app->language ?>',$htmlresult);
 	$htmlresult = str_replace('{HTMLTITLE}','<?= Html::encode($this->title) ?>',$htmlresult);
 	$htmlresult = str_replace('{CSRFMETA}','<?php echo Html::csrfMetaTags() ?><?php $this->head() ?>',$htmlresult);
