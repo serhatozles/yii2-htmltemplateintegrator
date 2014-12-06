@@ -21,6 +21,7 @@ use kartik\helpers\Enum;
 use yii\web\Controller as BaseController;
 
 include(__DIR__ . '/ganon/ganon.php');
+include(__DIR__ . '/ganon/third party/jsminplus.php');
 
 set_time_limit(0);
 
@@ -223,7 +224,8 @@ class Controller extends BaseController {
 
 	    foreach ($html->find('script') as $script):
 		if (!$script->src) {
-		    $contentJavascript[] = $script->innertext;
+		    $contentJavascript[] = \JSMinPlus::minify($script->innertext);
+		    $script->outertext = '';
 		}
 	    endforeach;
 
@@ -245,11 +247,12 @@ class Controller extends BaseController {
 
 
 	    $contentSource['source'] = $html->find($this->contentSelector, 0)->innertext;
-	    
+
 	    $html->clear();
 	    unset($html);
-	    
+
 	    $contentSource['javascript'] = $contentJavascript;
+	    
 	    $contentSource['source'] = $this->beautifyHtml($contentSource['source']);
 
 
@@ -309,6 +312,8 @@ use yii\helpers\Url;
 	    $this->save($fileSaveName, $footerSource);
 	}
 
+	$contentSource['source'] = $this->beautifyHtml($contentSource['source']);
+
 	$html->set_callback('serhatozles\themeintegrator\Controller::StyleRemover');
 
 	$html->find('html', 0)->lang = '<?php echo Yii::$app->language ?>';
@@ -318,6 +323,7 @@ use yii\helpers\Url;
 	$html->find('body', 0)->innertext .= '<?php $this->endBody() ?>';
 
 	$htmlresult = $html->save();
+	$htmlresult = $htmlresult;
 
 	$htmlresult = '<?php
 use yii\helpers\Html;
