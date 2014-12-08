@@ -222,13 +222,26 @@ class Controller extends BaseController {
 
 	    $contentJavascript = [];
 
-	    foreach ($html->find('script') as $script):
+	    foreach ($html->find('head script') as $script):
 		if (!$script->src) {
-		    $contentJavascript[] = \JSMinPlus::minify($script->innertext);
+		    $script->innertext = str_replace('	',"\r\n",$script->innertext);
+		    $contentJavascriptIn['position'] = 'POS_HEAD';
+		    $contentJavascriptIn['js'] = \JSMinPlus::minify($script->innertext);
+		    $contentJavascript[] = $contentJavascriptIn;
 		    $script->outertext = '';
 		}
 	    endforeach;
-
+	    
+	    foreach ($html->find('body script') as $script):
+		if (!$script->src) {
+		    $script->innertext = str_replace('	',"\r\n",$script->innertext);
+		    $contentJavascriptIn['position'] = 'POS_END';
+		    $contentJavascriptIn['js'] = \JSMinPlus::minify($script->innertext);
+		    $contentJavascript[] = $contentJavascriptIn;
+		    $script->outertext = '';
+		}
+	    endforeach;
+	    
 //	    $contentSelecterinLenght = 0;
 //	    $contentSource = '';
 //	    
@@ -410,7 +423,7 @@ use yii\helpers\Url;
 $this->title = "' . $contentName . '";
     ';
 	    foreach ($content['source']['javascript'] as $javascript):
-		$javascriptInside = '$this->registerJs("' . addslashes($javascript) . '",\yii\web\View::POS_END);';
+		$javascriptInside = '$this->registerJs("' . addslashes($javascript['js']) . '",\yii\web\View::' . $javascript['position'] . ');';
 		$OverContent .= $javascriptInside;
 	    endforeach;
 	    $OverContent .= '
