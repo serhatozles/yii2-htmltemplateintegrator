@@ -15,7 +15,7 @@ $this->beginContent(__DIR__ . '/layouts/main.php');
 	    <?php echo Html::input('hidden', 'step', '1'); ?>
 	    <?php echo Html::label('Template:'); ?>
 	    <?php echo Html::dropDownList('folder', null, $themeList, ['class' => 'form-control']); ?><br /><br />
-	    <?php echo Html::submitButton('Submit', ['class' => 'btn btn-default']); ?>
+	    <?php echo Html::submitButton('Submit', ['class' => 'btn btn-primary']); ?>
 	    <?php echo Html::endForm(); ?>
 	    <?php
 	} else {
