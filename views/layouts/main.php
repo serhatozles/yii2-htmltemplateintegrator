@@ -32,8 +32,15 @@ AppAsset::register($this);
                     'class' => 'navbar-inverse navbar-fixed-top',
                 ],
             ]);
+	    
+	    
+            $menuItems = [
+                ['label' => 'Project Page', 'url' => 'https://github.com/serhatozles/yii2-htmltemplateintegrator','linkOptions' => ['target' => '_blank']],
+            ];
+	    
             echo Nav::widget([
                 'options' => ['class' => 'navbar-nav navbar-right'],
+                'items' => $menuItems,
             ]);
             NavBar::end();
         ?>
