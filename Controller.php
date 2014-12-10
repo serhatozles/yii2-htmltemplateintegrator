@@ -335,7 +335,7 @@ class Controller extends BaseController {
 use yii\helpers\Url;
 ?>';
 
-	if (!empty($this->headerSelector)) {
+	if (!empty($this->headerSelector) && !empty($html->find($this->headerSelector, 0)->innertext)) {
 	    $headerSource = $html->find($this->headerSelector, 0)->innertext;
 	    $html->find($this->headerSelector, 0)->innertext = '{HEADERINCLUDE}';
 	    $fileSaveName = Yii::getAlias('@app/views/layouts/' . $this->layoutGeneral . '_header.php');
@@ -347,12 +347,12 @@ use yii\helpers\Url;
 	    $this->save($fileSaveName, $headerSource);
 	}
 
-	if (!empty($this->contentSelector)) {
+	if (!empty($this->contentSelector) && !empty($html->find($this->contentSelector, 0)->innertext)) {
 //	    $contentSource = $html->find($this->contentSelector, 0)->innertext;
 	    $html->find($this->contentSelector, 0)->innertext = '{CONTENT}';
 	}
 
-	if (!empty($this->footerSelector)) {
+	if (!empty($this->footerSelector) && !empty($html->find($this->footerSelector, 0)->innertext)) {
 	    $footerSource = $html->find($this->footerSelector, 0)->innertext;
 	    $html->find($this->footerSelector, 0)->innertext = '{INCLUDEFOOTER}';
 	    $footerSource = $this->beautifyHtml($footerSource);
