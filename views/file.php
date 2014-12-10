@@ -37,7 +37,9 @@ $this->beginContent(__DIR__ . '/layouts/main.php');
     	    <div class="col-md-4 ControllerList">
     		<div class="panel panel-default">
     		    <div class="panel-body">
+			    <?php echo Html::label('Controller Name:'); ?>
 			    <?php echo Html::input('text', 'ControllerNameChange[]', $MainControllerName, ['class' => 'form-control']); ?><br />
+			    <?php echo Html::label('Actions:'); ?>
 			    <?php echo Html::dropDownList('ControllerActionChange[]', $ActionList, $ActionList, ['class' => 'form-control', 'multiple' => true, 'size' => 6]); ?><br />
 			    <?php echo Html::button('Remove', ['class' => 'btn btn-danger removeController']); ?>
     		    </div>
@@ -68,7 +70,9 @@ $this->beginContent(__DIR__ . '/layouts/main.php');
     	    <div class="col-md-4 ControllerList">
     		<div class="panel panel-default">
     		    <div class="panel-body">
+			    <?php echo Html::label('Controller Name:'); ?>
 			    <?php echo Html::input('text', 'controllerName[0]', $MainControllerName, ['class' => 'form-control']); ?><br />
+			    <?php echo Html::label('Actions:'); ?>
 			    <?php echo Html::dropDownList('controllerAction[0][]', $ActionList, $ActionList, ['class' => 'form-control', 'multiple' => true, 'size' => 6]); ?><br />
 			    <?php echo Html::button('Remove', ['class' => 'btn btn-danger removeController']); ?>
     		    </div>
