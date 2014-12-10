@@ -79,7 +79,7 @@ $this->beginContent(__DIR__ . '/layouts/main.php');
     	<hr/>
 	    <?php echo Html::input('hidden', 'folder', $folder); ?>
 	    <?php echo Html::input('hidden', 'step', '2'); ?>
-	    <?php echo Html::submitButton('Submit', ['class' => 'btn btn-default']); ?>
+	    <?php echo Html::submitButton('Generate', ['class' => 'btn btn-default']); ?>
 	    <?php echo Html::endForm(); ?>
 	    <?php
 	} else {
