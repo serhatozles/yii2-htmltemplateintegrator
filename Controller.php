@@ -468,7 +468,7 @@ use yii\helpers\Url;
 $this->title = "' . $actionName . '";
     ';
 		foreach ($content['source']['javascript'] as $javascript):
-		    $javascriptInside = '$this->registerJs("' . addslashes($javascript['js']) . '",\yii\web\View::' . $javascript['position'] . ');';
+		    $javascriptInside = "\$this->registerJs('" . addslashes($javascript['js']) . "',\yii\web\View::" . $javascript['position'] . ");";
 		    $OverContent .= $javascriptInside;
 		endforeach;
 		$OverContent .= '
