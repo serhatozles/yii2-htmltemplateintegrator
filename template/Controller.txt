@@ -4,7 +4,6 @@ namespace {APPNAME}\controllers;
 
 use Yii;
 use yii\web\Controller;
-{CONTROLLERMODELS}
 
 /**
  * extension: HTML Template Integrator

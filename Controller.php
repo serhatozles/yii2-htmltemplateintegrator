@@ -32,7 +32,6 @@ class Controller extends BaseController {
     public $generalContentsList = [];
     public $generalActionsList = [];
     public $generalControllersList = [];
-    public $generalActionModelList = [];
     public $layoutsFirstList = [];
     public $layoutsList = [];
     public $layoutsListAll = [];
@@ -51,8 +50,6 @@ class Controller extends BaseController {
     const ACTIONNAME = "ACTIONNAME";
     const ACTIONFILENAME = "ACTIONFILENAME";
     const ACTIONLAYOUT = "ACTIONLAYOUT";
-    const ACTIONMODELS = "ACTIONMODELS";
-    const ACTIONMODELSVARIABLES = "ACTIONMODELSVARIABLES";
     const ASSETNAME = "ASSETNAME";
     const ASSETCSSLIST = "ASSETCSSLIST";
     const ASSETJSLIST = "ASSETJSLIST";
@@ -63,7 +60,6 @@ class Controller extends BaseController {
     const LAYOUTASSETSREGISTER = "LAYOUTASSETSREGISTER";
     const LAYOUTFILESLIST = "LAYOUTFILESLIST";
     const CONTROLLERNAME = "CONTROLLERNAME";
-    const CONTROLLERMODELS = "CONTROLLERMODELS";
     const CONTROLLERACTIONLIST = "CONTROLLERACTIONLIST";
 
     public $actionTemplate = '
@@ -73,9 +69,7 @@ class Controller extends BaseController {
     */
     public function action{ACTIONNAME}() {
 	$this->layout = "{ACTIONLAYOUT}";
-	
-{ACTIONMODELS}
-	return $this->render("{ACTIONFILENAME}",[{ACTIONMODELSVARIABLES}]);
+	return $this->render("{ACTIONFILENAME}");
     }';
     public $headerSelector = '';
     public $contentSelector = '';
@@ -101,7 +95,6 @@ class Controller extends BaseController {
 	    if ($post['step'] == 1) {
 		$folder = $this->templatePath . $folderName;
 		$fileList = $this->getHtml($folder);
-		$modelList = $this->getModels();
 
 		$ActionList = [];
 
@@ -127,7 +120,6 @@ class Controller extends BaseController {
 			    'fileList' => $fileList,
 			    'folder' => $folderName,
 			    'ActionList' => $ActionList,
-			    'modelList' => $modelList,
 			    'MainControllerName' => $MainControllerName,
 		]);
 	    } elseif ($post['step'] == 2) {
@@ -139,10 +131,6 @@ class Controller extends BaseController {
 		$this->footerSelector = $post['footerselector'];
 		$controllerName = $post['controllerName'];
 		$controllerAction = $post['controllerAction'];
-		$modelGenerateAction = $post['modelGenerateAction'];
-		$modelGenerateOriginalName = $post['modelGenerateOriginalName'];
-		$modelGenerateCode = $post['modelGenerateCode'];
-		$modelGenerateVariableName = $post['modelGenerateVariableName'];
 
 		$this->assetGeneral = $this->nameGenerator($this->folderName);
 		$this->layoutGeneral = strtolower($this->nameGenerator($this->folderName));
@@ -182,30 +170,12 @@ class Controller extends BaseController {
 
 		endfor;
 
-		/*
-		 * This code is generating ModelsCode into Controller's action.
-		 */
-
-		if (count($modelGenerateAction) > 0) :
-
-		    foreach ($modelGenerateAction as $key => $actionName):
-
-			$this->generalActionModelList[$actionName][$modelGenerateOriginalName[$key]][$modelGenerateVariableName[$key]] = $modelGenerateCode[$key];
-
+		for ($i = 0; $i < count($controllerName); $i++):
+		    $this->generalControllersList[$controllerName[$i]] = $controllerAction[$i];
+		    foreach ($controllerAction[$i] as $controllerActionUrl):
+			$this->urlReplace[$this->listOriginal[$controllerActionUrl]] = '<?=Url::to(["/' . strtolower($controllerName[$i]) . '/' . strtolower($controllerActionUrl) . '"]); ?>';
 		    endforeach;
-
-//		    $this->generateActionModel();
-
-		endif;
-
-		foreach ($controllerName as $key => $controlName):
-
-		    $this->generalControllersList[$controlName] = $controllerAction[$key];
-		    foreach ($controllerAction[$key] as $controllerActionUrl):
-			$this->urlReplace[$this->listOriginal[$controllerActionUrl]] = '<?=Url::to(["/' . strtolower($controlName) . '/' . strtolower($controllerActionUrl) . '"]); ?>';
-		    endforeach;
-
-		endforeach;
+		endfor;
 
 		$this->layoutSource = $this->GenerateLayoutContent($this->layoutSourceFirst);
 
@@ -246,55 +216,22 @@ class Controller extends BaseController {
 	foreach ($this->generalControllersList as $controllerName => $controller):
 
 	    $controllerActionListResult = '';
-	    $controllerModelList = [];
-	    $controllerModelListResult = '';
 
 	    foreach ($controller as $actionName):
-
-		$ActionModelsGen = '';
-		$ActionModelsVariablesGen = '';
-
-		if (count($this->generalActionModelList[$actionName]) > 0):
-
-		    $ActionModelsGen .= "	// ActionModels\r\n\r\n";
-
-		    foreach ($this->generalActionModelList[$actionName] as $ModelName => $ModelVariables):
-
-			$controllerModelList[] = "use \\app\\models\\" . $ModelName . ";";
-
-			foreach ($ModelVariables as $ModelVariableName => $ModelCode):
-
-			    $ActionModelsGen .= '	$' . $ModelVariableName . ' = ' . $ModelName . '::' . $ModelCode . ";\r\n";
-			    $ActionModelsVariablesGen .= "'" . $ModelVariableName . "' => $" . $ModelVariableName . ",";
-
-			endforeach;
-		    endforeach;
-
-		    $ActionModelsGen .= "\r\n	// ActionModels\r\n";
-
-		endif;
 
 		$controllerActionList = $this->actionTemplate . "\r\n";
 		$controllerActionList = str_replace('{' . self::ACTIONNAME . '}', $this->generalActionsList[$actionName]['actionName'], $controllerActionList);
 		$controllerActionList = str_replace('{' . self::ACTIONFILENAME . '}', $this->generalActionsList[$actionName]['fileName'], $controllerActionList);
 		$controllerActionList = str_replace('{' . self::ACTIONLAYOUT . '}', $this->generalActionsList[$actionName]['layout'], $controllerActionList);
-		$controllerActionList = str_replace('{' . self::ACTIONMODELS . '}', $ActionModelsGen, $controllerActionList);
-		$controllerActionList = str_replace('{' . self::ACTIONMODELSVARIABLES . '}', $ActionModelsVariablesGen, $controllerActionList);
 		$controllerActionListResult .= $controllerActionList;
 
 	    endforeach;
-
-	    if (count($controllerModelList) > 0) {
-		$controllerModelList = array_unique($controllerModelList);
-		$controllerModelListResult = implode("\r\n",$controllerModelList);
-	    }
 
 	    $fileSaveName = Yii::getAlias('@app/controllers/' . $controllerName . 'Controller.php');
 
 	    $ControllerTemplate = $this->TemplateOpen($this->controllerTemplate);
 	    $ControllerTemplate = $this->changeAsset($ControllerTemplate, $controllerName, self::CONTROLLERNAME);
 	    $ControllerTemplate = $this->changeAsset($ControllerTemplate, $controllerActionListResult, self::CONTROLLERACTIONLIST);
-	    $ControllerTemplate = $this->changeAsset($ControllerTemplate, $controllerModelListResult, self::CONTROLLERMODELS);
 	    $ControllerTemplate = $this->changeAsset($ControllerTemplate, $this->appname, self::APPNAME);
 
 	    $fileArray['FileName'] = $fileSaveName;
@@ -516,9 +453,9 @@ use yii\helpers\Html;
 	    $this->folderCreate($fileSaveName);
 
 	    foreach ($actionList as $actionName):
-
+		
 		$fileSaveName = Yii::getAlias('@app/views/' . strtolower($controllerName) . '/');
-
+		
 		$content = $this->generalContentsList[$actionName];
 
 		$content['source']['source'] = strtr($content['source']['source'], $this->urlReplace);
@@ -549,6 +486,7 @@ $this->title = "' . $actionName . '";
 	    endforeach;
 
 	endforeach;
+
     }
 
     private function generateLayoutList($folderName) {
@@ -688,8 +626,8 @@ $this->title = "' . $actionName . '";
     }
 
     function nameGenerator($baslik) {
-	$bul = array('Ç', 'Ş', 'Ğ', 'Ü', 'İ', 'Ö', 'ç', 'ş', 'ğ', 'ü', 'ö', 'ı', '-', '_');
-	$yap = array('c', 's', 'g', 'u', 'i', 'o', 'c', 's', 'g', 'u', 'o', 'i', ' ', ' ');
+	$bul = array('Ç', 'Ş', 'Ğ', 'Ü', 'İ', 'Ö', 'ç', 'ş', 'ğ', 'ü', 'ö', 'ı', '-');
+	$yap = array('c', 's', 'g', 'u', 'i', 'o', 'c', 's', 'g', 'u', 'o', 'i', ' ');
 	$perma = str_replace($bul, $yap, $baslik);
 	$perma = preg_replace("@[^A-Za-z0-9\-_]@i", ' ', $perma);
 	$perma = trim(preg_replace('/\s+/', ' ', $perma));
@@ -704,21 +642,6 @@ $this->title = "' . $actionName . '";
 	    while (false !== ($file = readdir($handle))) {
 		if ($file != "." && $file != ".." && strtolower(substr($file, strrpos($file, '.') + 1)) == 'html') {
 		    $thelist[] = $file;
-		}
-	    }
-	    closedir($handle);
-	}
-	return $thelist;
-    }
-
-    function getModels() {
-	$thelist = [];
-	$dir = Yii::getAlias('@app/models/');
-	if ($handle = opendir($dir)) {
-	    while (false !== ($file = readdir($handle))) {
-		if ($file != "." && $file != ".." && strtolower(substr($file, strrpos($file, '.') + 1)) == 'php') {
-		    $file_info = pathinfo($file);
-		    $thelist[] = $file_info['filename'];
 		}
 	    }
 	    closedir($handle);
