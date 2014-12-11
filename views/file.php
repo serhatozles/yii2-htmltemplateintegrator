@@ -41,7 +41,7 @@ var counterModel = 0;
 $(document).on("click",".addModel",function(){
     var modelNameAutoComplete = $("#modelNameAutoComplete").val();
     var modelGenerateAction = $("#modelGenerateAction").val();
-    $("#modelNameAutoComplete").val("");
+//    $("#modelNameAutoComplete").val("");
     if(modelNameAutoComplete != ""){
 	var ModelTemplateNew = ModelTemplate.replace("{ACTIONNAME}",modelGenerateAction);
 	ModelTemplateNew = ModelTemplateNew.replace("{ACTIONHIDDENNAME}",modelGenerateAction);
