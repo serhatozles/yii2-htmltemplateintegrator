@@ -119,8 +119,16 @@ $this->beginContent(__DIR__ . '/layouts/main.php');
     		    <div class="col-md-4 ModelList">
     			<div class="panel panel-default">
     			    <div class="panel-body">
-				    <?php echo Html::label('Model Name:'); ?><br />
-				    {ACTIONNAME}
+    				<div class="row">
+    				    <div class="col-md-6">
+					    <?php echo Html::label('Action Name:'); ?><br />
+    					{ACTIONNAME}
+    				    </div>
+    				    <div class="col-md-6">
+					    <?php echo Html::label('Model Name:'); ?><br />
+    					{MODELNAME}
+    				    </div>
+    				</div>
 				    <?php echo Html::input('hidden', 'modelChangeActionName[]', '{ACTIONHIDDENNAME}'); ?>
 				    <?php echo Html::input('hidden', 'modelChangeModelOriginalName[]', '{MODELHIDDENNAME}'); ?>
     				<hr />
