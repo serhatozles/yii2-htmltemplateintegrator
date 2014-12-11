@@ -3,7 +3,13 @@
 use kartik\helpers\Html;
 use yii\jui\AutoComplete;
 
-$ModelCode = ["find()","findOne()",'find()->where([])'];
+$ModelCode = [
+    "find()",
+    "findAll([])",
+    "findBySql('YOURQUERY')",
+    "findOne()",
+    'find()->where([])',
+];
 
 $js = '
 var ControllerTemplate = $(".ControllerTemplate").html();
@@ -121,7 +127,7 @@ $this->beginContent(__DIR__ . '/layouts/main.php');
 				    <?php echo Html::input('text', 'modelChangeVariableName[]', '{MODELVARIABLENAME}', ['class' => 'form-control']); ?>
     				<hr />
 				    <?php echo Html::label('Model Code:'); ?>
-				    <?php echo Html::input('text', 'modelChangeModelCode[]', 'find()', ['class' => 'form-control ModelCode ui-autocomplete-input','autocomplete' => 'off']); ?>
+				    <?php echo Html::input('text', 'modelChangeModelCode[]', 'find()', ['class' => 'form-control ModelCode ui-autocomplete-input', 'autocomplete' => 'off']); ?>
     			    </div>
     			    <div class="panel-footer"><?php echo Html::button('Remove', ['class' => 'btn btn-danger removeModel']); ?></div>
     			</div>
