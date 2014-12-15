@@ -81,11 +81,17 @@ $(document).on("click",".addModel",function(){
 	$(".modelCoderSelector").on("keypress", function(e) {
 	    var code = e.keyCode || e.which; 
 	    if (code  == 13) {
+	    $selectHtml = "";
 	    try{
-		$modelCoderEditor.getSession().setValue($("#" + ModalIframeID).contents().find($(this).val()).html());
+		$selectHtml = $("#" + ModalIframeID).contents().find($(this).val()).html();
 	    }
 	    catch(err) {
 		alert("Object is not found.");
+	    }
+	    if($selectHtml != "" && typeof $selectHtml != "undefined"){
+		$modelCoderEditor.getSession().setValue($selectHtml);
+	    }else{
+		$(this).val($("#" + ModalIframeID).get(0).contentWindow.htiTagSelector);
 	    }
 		e.preventDefault();
 		return false;
