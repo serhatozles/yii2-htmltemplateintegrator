@@ -81,15 +81,25 @@ $(document).on("click",".addModel",function(){
 	$(".modelCoderSelector").on("keypress", function(e) {
 	    var code = e.keyCode || e.which; 
 	    if (code  == 13) {
-	    $selectHtml = "";
+	    var $selectHtml = "";
+	    var $selectorVar = $(this).val();
 	    try{
-		$selectHtml = $("#" + ModalIframeID).contents().find($(this).val()).html();
+		$selectHtml = $("#" + ModalIframeID).contents().find($selectorVar).html();
 	    }
 	    catch(err) {
 		alert("Object is not found.");
 	    }
 	    if($selectHtml != "" && typeof $selectHtml != "undefined"){
 		$modelCoderEditor.getSession().setValue($selectHtml);
+		$("#" + ModalIframeID).get(0).contentWindow.htiTagSelector = $selectorVar;
+		$("#" + ModalIframeID).get(0).contentWindow.htiTagHtml = $selectHtml;
+		var newSelector = $("#" + ModalIframeID).contents().find($selectorVar);
+		var position = newSelector.offset();
+		$("#" + ModalIframeID).contents().find(".HtmlTemplateIntegratorSelected").css("width", newSelector.outerWidth());
+		$("#" + ModalIframeID).contents().find(".HtmlTemplateIntegratorSelected").css("height", newSelector.outerHeight());
+		$("#" + ModalIframeID).contents().find(".HtmlTemplateIntegratorSelected").css("left", position.left);
+		$("#" + ModalIframeID).contents().find(".HtmlTemplateIntegratorSelected").css("top", position.top);
+		$("#" + ModalIframeID).contents().find(".HtmlTemplateIntegratorSelected").show();
 	    }else{
 		$(this).val($("#" + ModalIframeID).get(0).contentWindow.htiTagSelector);
 	    }

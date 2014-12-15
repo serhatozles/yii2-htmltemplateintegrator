@@ -33,6 +33,13 @@
 	var $selector = $(this).getPath();
 	htiTagSelector = $selector;
 	htiTagHtml = $(this)[0].outerHTML;
+	
+	var position = $(this).offset();
+	$(".HtmlTemplateIntegratorSelected").css("width", $(this).outerWidth());
+	$(".HtmlTemplateIntegratorSelected").css("height", $(this).outerHeight());
+	$(".HtmlTemplateIntegratorSelected").css("left", position.left);
+	$(".HtmlTemplateIntegratorSelected").css("top", position.top);
+	$(".HtmlTemplateIntegratorSelected").show();
 //    $.ajax({
 //	url: "' . Url::to(['integrator/include', 'folder' => $folderName, 'file' => $file]) . '&selector=" + $selector,
 //    }).done(function(result) {
@@ -84,6 +91,7 @@
     }
 </style>
 <div class="HtmlTemplateIntegrator htmlintegratorResetStyles" style="-webkit-box-shadow:0px 0px 2px 2px #39F !important;-moz-box-shadow:0px 0px 2px 2px #39F !important;box-shadow:0px 0px 2px 2px #39F !important;"></div>
+<div class="HtmlTemplateIntegratorSelected htmlintegratorResetStyles" style="-webkit-box-shadow:0px 0px 2px 2px #FF2E2E !important;-moz-box-shadow:0px 0px 2px 2px #FF2E2E !important;box-shadow:0px 0px 2px 2px #FF2E2E !important;"></div>
 </body>
 <?php
 $js = ob_get_contents();
