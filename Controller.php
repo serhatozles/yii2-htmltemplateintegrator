@@ -304,22 +304,11 @@ class Controller extends BaseController {
 
 	include('includeFileExtra.php');
 
-//	$HtmlFile = str_replace('</body>', $js, $HtmlFile);
-//	$selector = 'html>body>div>header>div>div[1]>nav[0]>ul>li[1]>ul>li[1]>ul>li[2]';
-//	$selector = 'html>body>div:eq(0)>section>div>div:eq(1)>div>div:eq(0)>h2';
-//	
-//	$html = str_get_dom($HtmlFile);
-//	echo $html($selector,0)->html();
-//	exit;
-
 	$HtmlFile = str_replace('</body>', $js, $HtmlFile);
 	$html = str_get_dom($HtmlFile);
 	if (!is_null($selector)):
 
 
-//	echo $html("html>body>div:eq(0)", 0)->getInnerText();
-//	echo $selector;
-//	exit;
 	    $selector = str_replace(':eq(0)', '', $selector);
 
 	    try {
@@ -331,7 +320,6 @@ class Controller extends BaseController {
 	endif;
 
 
-//	$html = SimpleHTMLDom::str_get_html($HtmlFile);
 	foreach ($html('img') as $img):
 	    $img->src = Yii::getAlias('@web/assets/' . $folderName . '/') . $img->src;
 	endforeach;
@@ -339,15 +327,9 @@ class Controller extends BaseController {
 	    $link->href = Yii::getAlias('@web/assets/' . $folderName . '/') . $link->href;
 	endforeach;
 
-//	$HtmlFile = $html->save();
-
 	dom_format($html, array('attributes_case' => CASE_LOWER));
 
 	echo $html;
-
-//	$selector = 'html>body>div>header>div>div[1]>nav[0]>ul>li[1]>ul>li[1]>ul>li[2]';
-//	$selector = 'html>body>div>header>div>div:eq(1)>nav:eq(0)>ul>li:eq(2)>ul>li:eq(1)>ul>li>div>div:eq(0)>div:eq(1)>h4';
-//	return $HtmlFile;
     }
 
     private function GetContent($HtmlFile, $genfilename) {
@@ -401,51 +383,38 @@ class Controller extends BaseController {
 
 
 
-//	    $html = SimpleHTMLDom::str_get_html($HtmlFile);
-
 		$html = str_get_dom($HtmlFile);
 
-//	    if (!empty($this->headerSelector) && !empty($html->find($this->headerSelector, 0)->innertext)) {
 		if (!empty($this->headerSelector)) {
-//		$html->find($this->headerSelector, 0)->innertext = '';
 		    $html($this->headerSelector, 0)->setInnerText('');
 		}
 
-//	    if (!empty($this->footerSelector) && !empty($html->find($this->footerSelector, 0)->innertext)) {
 		if (!empty($this->footerSelector)) {
-//		$html->find($this->footerSelector, 0)->innertext = '';
 		    $html($this->footerSelector, 0)->setInnerText('');
 		}
 
-//	    foreach ($html->find('img') as $img):
 		foreach ($html('img') as $img):
 		    $img->src = Yii::getAlias('@web/assets/' . $this->layoutGeneral . '/') . $img->src;
 		endforeach;
 
 		$contentJavascript = [];
 
-//	    foreach ($html->find('head script') as $script):
 		foreach ($html('head script') as $script):
 		    if (!$script->src) {
-//		    $js = str_replace('	', "\r\n", $script->innertext);
 			$js = str_replace('	', "\r\n", $script->getInnerText());
 			$contentJavascriptIn['position'] = 'POS_HEAD';
 			$contentJavascriptIn['js'] = \JSMinPlus::minify($js);
 			$contentJavascript[] = $contentJavascriptIn;
-//		    $script->outertext = '';
 			$script->setOuterText('');
 		    }
 		endforeach;
 
-//	    foreach ($html->find('body script') as $script):
 		foreach ($html('body script') as $script):
 		    if (!$script->src) {
-//		    $js = str_replace('	', "\r\n", $script->innertext);
 			$js = str_replace('	', "\r\n", $script->getInnerText());
 			$contentJavascriptIn['position'] = 'POS_END';
 			$contentJavascriptIn['js'] = \JSMinPlus::minify($js);
 			$contentJavascript[] = $contentJavascriptIn;
-//		    $script->outertext = '';
 			$script->setOuterText('');
 		    }
 		endforeach;
@@ -469,8 +438,6 @@ class Controller extends BaseController {
 //	    unset($html);
 
 		$contentSource['javascript'] = $contentJavascript;
-
-//	    $contentSource['source'] = $this->beautifyHtml($contentSource['source']);
 
 		$FileCache = new FileCache();
 
