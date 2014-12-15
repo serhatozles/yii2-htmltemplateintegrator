@@ -19,6 +19,7 @@ use yii\helpers\Url;
 use yii\helpers\Html;
 use kartik\helpers\Enum;
 use yii\web\Controller as BaseController;
+use yii\caching\FileCache;
 
 include(__DIR__ . '/ganon/ganon.php');
 include(__DIR__ . '/ganon/third party/jsminplus.php');
@@ -27,12 +28,7 @@ set_time_limit(0);
 
 class Controller extends BaseController {
 
-    public $generalAssetsList = [];
-    public $generalLayoutsList = [];
-    public $generalContentsList = [];
-    public $generalActionsList = [];
-    public $generalControllersList = [];
-    public $generalActionModelList = [];
+    public $general = [];
     public $layoutsFirstList = [];
     public $layoutsList = [];
     public $layoutsListAll = [];
@@ -52,6 +48,7 @@ class Controller extends BaseController {
     const ACTIONFILENAME = "ACTIONFILENAME";
     const ACTIONLAYOUT = "ACTIONLAYOUT";
     const ACTIONMODELS = "ACTIONMODELS";
+    const ACTIONVARIABLES = "ACTIONVARIABLES";
     const ACTIONMODELSVARIABLES = "ACTIONMODELSVARIABLES";
     const ASSETNAME = "ASSETNAME";
     const ASSETCSSLIST = "ASSETCSSLIST";
@@ -71,7 +68,7 @@ class Controller extends BaseController {
     * @actionName: {ACTIONNAME}
     * @layout: {ACTIONLAYOUT}
     */
-    public function action{ACTIONNAME}() {
+    public function action{ACTIONNAME}({ACTIONVARIABLES}) {
 	$this->layout = "{ACTIONLAYOUT}";
 	
 {ACTIONMODELS}
@@ -98,12 +95,19 @@ class Controller extends BaseController {
 	    $post = Yii::$app->request->post();
 
 	    $folderName = $post['folder'];
+	    $folder = $this->templatePath . $post['folder'];
+	    $fileList = $this->getHtml($folder);
 	    if ($post['step'] == 1) {
-		$folder = $this->templatePath . $folderName;
-		$fileList = $this->getHtml($folder);
+
+		HTMLIntegratorAsset::register($this->getView());
+
 		$modelList = $this->getModels();
+		$headerSelector = $post['headerselector'];
+		$contentSelector = $post['contentselector'];
+		$footerSelector = $post['footerselector'];
 
 		$ActionList = [];
+		$generalVariable = [];
 
 		for ($i = 0; $i < count($fileList); $i++):
 
@@ -115,8 +119,13 @@ class Controller extends BaseController {
 		    }
 
 		    $ActionList[] = $genfilename;
+		    $generalVariable['ActionList'][$genfilename] = $fileList[$i];
 
 		endfor;
+
+		$generalVariable['webTemplateAddress'] = Yii::getAlias('@web/../template/' . $folderName . '/');
+		$generalVariable['modelList'] = ArrayHelper::map($modelList, 'ModelName', 'ModelAttr');
+		$generalVariable['modelListName'] = ArrayHelper::map($modelList, 'ModelName', 'ModelName');
 
 		$ActionList = array_combine($ActionList, $ActionList);
 		$fileList = array_combine($fileList, $fileList);
@@ -127,8 +136,11 @@ class Controller extends BaseController {
 			    'fileList' => $fileList,
 			    'folder' => $folderName,
 			    'ActionList' => $ActionList,
-			    'modelList' => $modelList,
 			    'MainControllerName' => $MainControllerName,
+			    'generalVariable' => $generalVariable,
+			    'headerSelector' => $headerSelector,
+			    'contentSelector' => $contentSelector,
+			    'footerSelector' => $footerSelector,
 		]);
 	    } elseif ($post['step'] == 2) {
 
@@ -143,12 +155,17 @@ class Controller extends BaseController {
 		$modelGenerateOriginalName = $post['modelGenerateOriginalName'];
 		$modelGenerateCode = $post['modelGenerateCode'];
 		$modelGenerateVariableName = $post['modelGenerateVariableName'];
+		$modelGenerateModelID = $post['modelGenerateModelID'];
+		$modelGenerateActionVariables = $post['modelGenerateActionVariables'];
 
 		$this->assetGeneral = $this->nameGenerator($this->folderName);
 		$this->layoutGeneral = strtolower($this->nameGenerator($this->folderName));
 
-		$folder = $this->templatePath . $post['folder'];
-		$fileList = $this->getHtml($folder);
+		foreach ($modelGenerateModelID as $key => $ModelID):
+
+		    $this->general['ModelsCodeList'][$modelGenerateAction[$key]][$ModelID]['VariableName'] = $modelGenerateVariableName[$key];
+
+		endforeach;
 
 		for ($i = 0; $i < count($fileList); $i++):
 
@@ -167,8 +184,8 @@ class Controller extends BaseController {
 
 		    $this->urlReplace[$fileList[$i]] = '<?=Url::to(["/' . $folderName . '/' . strtolower($genfilename) . '"]); ?>';
 
-		    $this->generalContentsList[$genfilename]['source'] = $this->GetContent($HtmlFile);
-		    $this->generalContentsList[$genfilename]['file'] = $fileList[$i];
+		    $this->general['ContentsList'][$genfilename]['source'] = $this->GetContent($HtmlFile, $genfilename);
+		    $this->general['ContentsList'][$genfilename]['file'] = $fileList[$i];
 
 		    $this->assetsList[$genfilename]['fileName'] = $fileList[$i];
 		    $this->assetsList[$genfilename]['asset'] = $this->getAssets($HtmlFile);
@@ -177,8 +194,8 @@ class Controller extends BaseController {
 			$this->layoutSourceFirst = $HtmlFile;
 		    }
 
-		    $this->generalActionsList[$genfilename]['actionName'] = ucwords(strtolower($genfilename));
-		    $this->generalActionsList[$genfilename]['fileName'] = $genfilename;
+		    $this->general['ActionsList'][$genfilename]['actionName'] = ucwords(strtolower($genfilename));
+		    $this->general['ActionsList'][$genfilename]['fileName'] = $genfilename;
 
 		endfor;
 
@@ -190,7 +207,8 @@ class Controller extends BaseController {
 
 		    foreach ($modelGenerateAction as $key => $actionName):
 
-			$this->generalActionModelList[$actionName][$modelGenerateOriginalName[$key]][$modelGenerateVariableName[$key]] = $modelGenerateCode[$key];
+			$this->general['ActionModelList'][$actionName][$modelGenerateOriginalName[$key]][$modelGenerateVariableName[$key]] = $modelGenerateCode[$key];
+			$this->general['ActionVariablesList'][$actionName] = $modelGenerateActionVariables[$key];
 
 		    endforeach;
 
@@ -200,7 +218,8 @@ class Controller extends BaseController {
 
 		foreach ($controllerName as $key => $controlName):
 
-		    $this->generalControllersList[$controlName] = $controllerAction[$key];
+		    $this->general['ControllersList'][$controlName] = $controllerAction[$key];
+
 		    foreach ($controllerAction[$key] as $controllerActionUrl):
 			$this->urlReplace[$this->listOriginal[$controllerActionUrl]] = '<?=Url::to(["/' . strtolower($controlName) . '/' . strtolower($controllerActionUrl) . '"]); ?>';
 		    endforeach;
@@ -241,9 +260,266 @@ class Controller extends BaseController {
 	return $this->renderFile(__DIR__ . "/views/client.php", ['themeList' => $themeList]);
     }
 
+    public function actionSave($folder, $file, $modelname, $selector = null) {
+
+	$post = Yii::$app->request->post();
+
+	if (!empty($post['html'])) :
+
+	    $htmlSave = [];
+
+	    if (preg_match_all('@\<\?(.*?)\?\>@si', $post['html'], $phpGet)):
+
+		foreach ($phpGet[1] as $phpSave):
+
+		    $htmlSave['php']['{' . $modelname . uniqid() . '}'] = '<?' . $phpSave . '?>';
+
+		endforeach;
+
+		$htmlSave['HTML'] = strtr($post['html'], array_flip($htmlSave['php']));
+
+	    else:
+
+		$htmlSave['HTML'] = $post['html'];
+
+	    endif;
+
+	    $htmlSave['Selector'] = $selector;
+	    $htmlSave['File'] = $file;
+	    $htmlSave['Folder'] = $folder;
+
+	    $FileCache = new FileCache();
+
+	    $FileCache->set($modelname, json_encode($htmlSave));
+
+	    return true;
+
+	endif;
+    }
+
+    public function actionInclude($folder, $file, $contentSelector = null, $selector = null) {
+	$folderName = $folder;
+	$folder = $this->templatePath . $folderName;
+	$HtmlFile = file_get_contents($folder . '/' . $file);
+
+	include('includeFileExtra.php');
+
+//	$HtmlFile = str_replace('</body>', $js, $HtmlFile);
+//	$selector = 'html>body>div>header>div>div[1]>nav[0]>ul>li[1]>ul>li[1]>ul>li[2]';
+//	$selector = 'html>body>div:eq(0)>section>div>div:eq(1)>div>div:eq(0)>h2';
+//	
+//	$html = str_get_dom($HtmlFile);
+//	echo $html($selector,0)->html();
+//	exit;
+
+	$HtmlFile = str_replace('</body>', $js, $HtmlFile);
+	$html = str_get_dom($HtmlFile);
+	if (!is_null($selector)):
+
+
+//	echo $html("html>body>div:eq(0)", 0)->getInnerText();
+//	echo $selector;
+//	exit;
+	    $selector = str_replace(':eq(0)', '', $selector);
+
+	    try {
+		return $html($selector, 0)->html();
+	    } catch (Exception $e) {
+		return 'Not Found';
+	    }
+
+	endif;
+
+
+//	$html = SimpleHTMLDom::str_get_html($HtmlFile);
+	foreach ($html('img') as $img):
+	    $img->src = Yii::getAlias('@web/assets/' . $folderName . '/') . $img->src;
+	endforeach;
+	foreach ($html('link') as $link):
+	    $link->href = Yii::getAlias('@web/assets/' . $folderName . '/') . $link->href;
+	endforeach;
+
+//	$HtmlFile = $html->save();
+
+	dom_format($html, array('attributes_case' => CASE_LOWER));
+
+	echo $html;
+
+//	$selector = 'html>body>div>header>div>div[1]>nav[0]>ul>li[1]>ul>li[1]>ul>li[2]';
+//	$selector = 'html>body>div>header>div>div:eq(1)>nav:eq(0)>ul>li:eq(2)>ul>li:eq(1)>ul>li>div>div:eq(0)>div:eq(1)>h4';
+//	return $HtmlFile;
+    }
+
+    private function GetContent($HtmlFile, $genfilename) {
+
+	if (!empty($this->contentSelector)) {
+
+	    if (!(count($this->general['ModelsCodeList'][$genfilename]) > 0)) { // Code Optimizing...
+		$html = SimpleHTMLDom::str_get_html($HtmlFile);
+
+		if (!empty($this->headerSelector) && !empty($html->find($this->headerSelector, 0)->innertext)) {
+		    $html->find($this->headerSelector, 0)->innertext = '';
+		}
+
+		if (!empty($this->footerSelector) && !empty($html->find($this->footerSelector, 0)->innertext)) {
+		    $html->find($this->footerSelector, 0)->innertext = '';
+		}
+
+		foreach ($html->find('img') as $img):
+		    $img->src = Yii::getAlias('@web/assets/' . $this->layoutGeneral . '/') . $img->src;
+		endforeach;
+
+		$contentJavascript = [];
+
+		foreach ($html->find('head script') as $script):
+		    if (!$script->src) {
+			$js = str_replace('	', "\r\n", $script->innertext);
+			$contentJavascriptIn['position'] = 'POS_HEAD';
+			$contentJavascriptIn['js'] = \JSMinPlus::minify($js);
+			$contentJavascript[] = $contentJavascriptIn;
+			$script->outertext = '';
+		    }
+		endforeach;
+
+		foreach ($html->find('body script') as $script):
+		    if (!$script->src) {
+			$js = str_replace('	', "\r\n", $script->innertext);
+			$contentJavascriptIn['position'] = 'POS_END';
+			$contentJavascriptIn['js'] = \JSMinPlus::minify($js);
+			$contentJavascript[] = $contentJavascriptIn;
+			$script->outertext = '';
+		    }
+		endforeach;
+
+		$contentSource['javascript'] = $contentJavascript;
+		$contentSource['source'] = $html->find($this->contentSelector, 0)->innertext;
+		$html->clear();
+		unset($html);
+
+		$contentSource['source'] = $this->beautifyHtml($contentSource['source']);
+	    } else {
+
+
+
+//	    $html = SimpleHTMLDom::str_get_html($HtmlFile);
+
+		$html = str_get_dom($HtmlFile);
+
+//	    if (!empty($this->headerSelector) && !empty($html->find($this->headerSelector, 0)->innertext)) {
+		if (!empty($this->headerSelector)) {
+//		$html->find($this->headerSelector, 0)->innertext = '';
+		    $html($this->headerSelector, 0)->setInnerText('');
+		}
+
+//	    if (!empty($this->footerSelector) && !empty($html->find($this->footerSelector, 0)->innertext)) {
+		if (!empty($this->footerSelector)) {
+//		$html->find($this->footerSelector, 0)->innertext = '';
+		    $html($this->footerSelector, 0)->setInnerText('');
+		}
+
+//	    foreach ($html->find('img') as $img):
+		foreach ($html('img') as $img):
+		    $img->src = Yii::getAlias('@web/assets/' . $this->layoutGeneral . '/') . $img->src;
+		endforeach;
+
+		$contentJavascript = [];
+
+//	    foreach ($html->find('head script') as $script):
+		foreach ($html('head script') as $script):
+		    if (!$script->src) {
+//		    $js = str_replace('	', "\r\n", $script->innertext);
+			$js = str_replace('	', "\r\n", $script->getInnerText());
+			$contentJavascriptIn['position'] = 'POS_HEAD';
+			$contentJavascriptIn['js'] = \JSMinPlus::minify($js);
+			$contentJavascript[] = $contentJavascriptIn;
+//		    $script->outertext = '';
+			$script->setOuterText('');
+		    }
+		endforeach;
+
+//	    foreach ($html->find('body script') as $script):
+		foreach ($html('body script') as $script):
+		    if (!$script->src) {
+//		    $js = str_replace('	', "\r\n", $script->innertext);
+			$js = str_replace('	', "\r\n", $script->getInnerText());
+			$contentJavascriptIn['position'] = 'POS_END';
+			$contentJavascriptIn['js'] = \JSMinPlus::minify($js);
+			$contentJavascript[] = $contentJavascriptIn;
+//		    $script->outertext = '';
+			$script->setOuterText('');
+		    }
+		endforeach;
+
+//	    $contentSelecterinLenght = 0;
+//	    $contentSource = '';
+//	    
+//	    foreach($html->find($this->contentSelector) as $contentselect):
+//		
+//		$contentinside = $contentselect->innertext;
+//		$contentlenght = mb_strlen($contentinside,'UTF-8');
+//		
+//		if($contentlenght > $contentSelecterinLenght){
+//		    $contentSource = $contentinside;
+//		    $contentSelecterinLenght = $contentlenght;
+//		}
+//		
+//	    endforeach;
+//	    $contentSource['source'] = $html->find($this->contentSelector, 0)->innertext;
+//	    $html->clear();
+//	    unset($html);
+
+		$contentSource['javascript'] = $contentJavascript;
+
+//	    $contentSource['source'] = $this->beautifyHtml($contentSource['source']);
+
+		$FileCache = new FileCache();
+
+		$selectorList = [];
+
+		foreach ($this->general['ModelsCodeList'][$genfilename] as $ModelsCodeID => $ModelsCodeInfo):
+
+		    $modalCacheGet = json_decode($FileCache->get($ModelsCodeID), true);
+
+		    if (!in_array($modalCacheGet['Selector'], $selectorList)) {
+			$html($modalCacheGet['Selector'], 0)->setOuterText($modalCacheGet['HTML']);
+			$selectorList[] = $modalCacheGet['Selector'];
+		    }
+
+		endforeach;
+
+
+		$contentSource['source'] = $html($this->contentSelector, 0)->getInnerText();
+		$contentSource['source'] = $this->beautifyHtml($contentSource['source']);
+
+		foreach ($this->general['ModelsCodeList'][$genfilename] as $ModelsCodeID => $ModelsCodeInfo):
+
+		    $modalCacheGet = json_decode($FileCache->get($ModelsCodeID), true);
+
+		    $ModalVariableName = $this->general['ModelsCodeList'][$genfilename][$ModelsCodeID]['VariableName'];
+
+		    if (count($modalCacheGet['php']) > 0):
+			$changePhp = [];
+			foreach ($modalCacheGet['php'] as $key => $php):
+			    $changePhp[$key] = $php . "\r\n";
+			endforeach;
+			$contentSource['source'] = strtr($contentSource['source'], $changePhp);
+		    endif;
+
+		    $contentSource['source'] = str_replace('{MODELVARIABLENAME}', '$' . $ModalVariableName, $contentSource['source']);
+
+		endforeach;
+	    }
+
+	    unset($html);
+
+	    return $contentSource;
+	}
+	return false;
+    }
+
     private function generateController() {
 
-	foreach ($this->generalControllersList as $controllerName => $controller):
+	foreach ($this->general['ControllersList'] as $controllerName => $controller):
 
 	    $controllerActionListResult = '';
 	    $controllerModelList = [];
@@ -254,11 +530,11 @@ class Controller extends BaseController {
 		$ActionModelsGen = '';
 		$ActionModelsVariablesGen = '';
 
-		if (count($this->generalActionModelList[$actionName]) > 0):
+		if (count($this->general['ActionModelList'][$actionName]) > 0):
 
 		    $ActionModelsGen .= "	// ActionModels\r\n\r\n";
 
-		    foreach ($this->generalActionModelList[$actionName] as $ModelName => $ModelVariables):
+		    foreach ($this->general['ActionModelList'][$actionName] as $ModelName => $ModelVariables):
 
 			$controllerModelList[] = "use \\app\\models\\" . $ModelName . ";";
 
@@ -275,18 +551,19 @@ class Controller extends BaseController {
 		endif;
 
 		$controllerActionList = $this->actionTemplate . "\r\n";
-		$controllerActionList = str_replace('{' . self::ACTIONNAME . '}', $this->generalActionsList[$actionName]['actionName'], $controllerActionList);
-		$controllerActionList = str_replace('{' . self::ACTIONFILENAME . '}', $this->generalActionsList[$actionName]['fileName'], $controllerActionList);
-		$controllerActionList = str_replace('{' . self::ACTIONLAYOUT . '}', $this->generalActionsList[$actionName]['layout'], $controllerActionList);
+		$controllerActionList = str_replace('{' . self::ACTIONNAME . '}', $this->general['ActionsList'][$actionName]['actionName'], $controllerActionList);
+		$controllerActionList = str_replace('{' . self::ACTIONFILENAME . '}', $this->general['ActionsList'][$actionName]['fileName'], $controllerActionList);
+		$controllerActionList = str_replace('{' . self::ACTIONLAYOUT . '}', $this->general['ActionsList'][$actionName]['layout'], $controllerActionList);
 		$controllerActionList = str_replace('{' . self::ACTIONMODELS . '}', $ActionModelsGen, $controllerActionList);
 		$controllerActionList = str_replace('{' . self::ACTIONMODELSVARIABLES . '}', $ActionModelsVariablesGen, $controllerActionList);
+		$controllerActionList = str_replace('{' . self::ACTIONVARIABLES . '}', $this->general['ActionVariablesList'][$actionName], $controllerActionList);
 		$controllerActionListResult .= $controllerActionList;
 
 	    endforeach;
 
 	    if (count($controllerModelList) > 0) {
 		$controllerModelList = array_unique($controllerModelList);
-		$controllerModelListResult = implode("\r\n",$controllerModelList);
+		$controllerModelListResult = implode("\r\n", $controllerModelList);
 	    }
 
 	    $fileSaveName = Yii::getAlias('@app/controllers/' . $controllerName . 'Controller.php');
@@ -305,79 +582,10 @@ class Controller extends BaseController {
 	endforeach;
     }
 
-    private function GetContent($HtmlFile) {
-
-	if (!empty($this->contentSelector)) {
-	    $html = SimpleHTMLDom::str_get_html($HtmlFile);
-
-	    if (!empty($this->headerSelector) && !empty($html->find($this->headerSelector, 0)->innertext)) {
-		$html->find($this->headerSelector, 0)->innertext = '';
-	    }
-
-	    if (!empty($this->footerSelector) && !empty($html->find($this->footerSelector, 0)->innertext)) {
-		$html->find($this->footerSelector, 0)->innertext = '';
-	    }
-
-	    foreach ($html->find('img') as $img):
-		$img->src = Yii::getAlias('@web/assets/' . $this->layoutGeneral . '/') . $img->src;
-	    endforeach;
-
-	    $contentJavascript = [];
-
-	    foreach ($html->find('head script') as $script):
-		if (!$script->src) {
-		    $script->innertext = str_replace('	', "\r\n", $script->innertext);
-		    $contentJavascriptIn['position'] = 'POS_HEAD';
-		    $contentJavascriptIn['js'] = \JSMinPlus::minify($script->innertext);
-		    $contentJavascript[] = $contentJavascriptIn;
-		    $script->outertext = '';
-		}
-	    endforeach;
-
-	    foreach ($html->find('body script') as $script):
-		if (!$script->src) {
-		    $script->innertext = str_replace('	', "\r\n", $script->innertext);
-		    $contentJavascriptIn['position'] = 'POS_END';
-		    $contentJavascriptIn['js'] = \JSMinPlus::minify($script->innertext);
-		    $contentJavascript[] = $contentJavascriptIn;
-		    $script->outertext = '';
-		}
-	    endforeach;
-
-//	    $contentSelecterinLenght = 0;
-//	    $contentSource = '';
-//	    
-//	    foreach($html->find($this->contentSelector) as $contentselect):
-//		
-//		$contentinside = $contentselect->innertext;
-//		$contentlenght = mb_strlen($contentinside,'UTF-8');
-//		
-//		if($contentlenght > $contentSelecterinLenght){
-//		    $contentSource = $contentinside;
-//		    $contentSelecterinLenght = $contentlenght;
-//		}
-//		
-//	    endforeach;
-
-
-
-	    $contentSource['source'] = $html->find($this->contentSelector, 0)->innertext;
-
-	    $html->clear();
-	    unset($html);
-
-	    $contentSource['javascript'] = $contentJavascript;
-
-	    $contentSource['source'] = $this->beautifyHtml($contentSource['source']);
-
-
-	    return $contentSource;
+    private function beautifyHtml($source, $html = null) {
+	if (is_null($html)) {
+	    $html = str_get_dom($source);
 	}
-	return false;
-    }
-
-    private function beautifyHtml($source) {
-	$html = str_get_dom($source);
 	ob_start();
 	dom_format($html, array('attributes_case' => CASE_LOWER));
 	echo $html;
@@ -484,7 +692,7 @@ use yii\helpers\Html;
 
     private function generateLayout() {
 
-	foreach ($this->generalLayoutsList as $layoutName => $layout):
+	foreach ($this->general['LayoutsList'] as $layoutName => $layout):
 
 	    $AssetsUse = implode("\r\n", array_map(function ($str) {
 				return 'use ' . $this->appname . '\assets\\' . $str . 'Asset;';
@@ -510,7 +718,7 @@ use yii\helpers\Html;
 
     private function generateContent() {
 
-	foreach ($this->generalControllersList as $controllerName => $actionList):
+	foreach ($this->general['ControllersList'] as $controllerName => $actionList):
 
 	    $fileSaveName = Yii::getAlias('@app/views/' . strtolower($controllerName) . '/');
 	    $this->folderCreate($fileSaveName);
@@ -519,7 +727,7 @@ use yii\helpers\Html;
 
 		$fileSaveName = Yii::getAlias('@app/views/' . strtolower($controllerName) . '/');
 
-		$content = $this->generalContentsList[$actionName];
+		$content = $this->general['ContentsList'][$actionName];
 
 		$content['source']['source'] = strtr($content['source']['source'], $this->urlReplace);
 
@@ -574,13 +782,13 @@ $this->title = "' . $actionName . '";
 	    $GenExtraTo = $GenExtra != 0 ? $this->nameGenerator(Enum::numToWords($GenExtra)) : '';
 	    $layoutName = $this->layoutGeneral . $GenExtraTo;
 
-	    $this->generalLayoutsList[$layoutName]['foldername'] = $folderName;
-	    $this->generalLayoutsList[$layoutName]['filesOriginal'] = $layout['layoutFile'];
-	    $this->generalLayoutsList[$layoutName]['assets'] = $layout['assets'];
+	    $this->general['LayoutsList'][$layoutName]['foldername'] = $folderName;
+	    $this->general['LayoutsList'][$layoutName]['filesOriginal'] = $layout['layoutFile'];
+	    $this->general['LayoutsList'][$layoutName]['assets'] = $layout['assets'];
 
 	    foreach ($layout['layoutFile'] as $key => $value):
 
-		$this->generalActionsList[$key]['layout'] = $layoutName;
+		$this->general['ActionsList'][$key]['layout'] = $layoutName;
 
 	    endforeach;
 
@@ -616,11 +824,11 @@ $this->title = "' . $actionName . '";
 
 	    $assetName = $this->assetGeneral . $GenExtraTo;
 
-	    $this->generalAssetsList[$assetName]['files'] = implode(',', $asset['files']);
-	    $this->generalAssetsList[$assetName]['filesOriginal'] = $asset['filesOriginal'];
-	    $this->generalAssetsList[$assetName]['foldername'] = $folderName;
-	    $this->generalAssetsList[$assetName]['css'] = $justCss;
-	    $this->generalAssetsList[$assetName]['js'] = $justJs;
+	    $this->general['AssetsList'][$assetName]['files'] = implode(',', $asset['files']);
+	    $this->general['AssetsList'][$assetName]['filesOriginal'] = $asset['filesOriginal'];
+	    $this->general['AssetsList'][$assetName]['foldername'] = $folderName;
+	    $this->general['AssetsList'][$assetName]['css'] = $justCss;
+	    $this->general['AssetsList'][$assetName]['js'] = $justJs;
 
 	    $this->layoutsFirstList[$assetName]['filesOriginal'] = $asset['filesOriginal'];
 	    $this->layoutsFirstList[$assetName]['files'] = $asset['files'];
@@ -631,7 +839,7 @@ $this->title = "' . $actionName . '";
 
     private function generateAsset() {
 
-	foreach ($this->generalAssetsList as $assetName => $asset):
+	foreach ($this->general['AssetsList'] as $assetName => $asset):
 	    $rsjustCss = "\r\n" . implode(',' . "\r\n", array_map(function ($str) {
 				return "'" . $str . "'";
 			    }, $asset['css'])) . "\r\n";
@@ -718,7 +926,15 @@ $this->title = "' . $actionName . '";
 	    while (false !== ($file = readdir($handle))) {
 		if ($file != "." && $file != ".." && strtolower(substr($file, strrpos($file, '.') + 1)) == 'php') {
 		    $file_info = pathinfo($file);
-		    $thelist[] = $file_info['filename'];
+		    $ModelInside = file_get_contents($dir . $file);
+
+		    if (preg_match('@attributeLabels[^>]+return(.*?)\}@si', $ModelInside, $ModelAttr)):
+			eval('$ModelAttr = ' . $ModelAttr[1]);
+			$thelistinside['ModelName'] = $file_info['filename'];
+			$thelistinside['ModelAttr'] = $ModelAttr;
+			$thelist[] = $thelistinside;
+			unset($ModelInside);
+		    endif;
 		}
 	    }
 	    closedir($handle);

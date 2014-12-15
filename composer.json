@@ -12,7 +12,8 @@
     ],
     "require": {
 	"serhatozles/yii2-simplehtmldom": "dev-master",
-	"kartik-v/yii2-helpers": "dev-master"
+	"kartik-v/yii2-helpers": "dev-master",
+	"bower-asset/jquery-textcomplete": "0.3.*"
     },
     "autoload": {
         "psr-4": {
