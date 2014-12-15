@@ -71,11 +71,27 @@ $(document).on("click",".addModel",function(){
 	ModelTemplateNew = window.replaceAll("{MODELVARIABLENAME}",modelNameAutoComplete + (counterModel == 0 ? "" : counterModel),ModelTemplateNew);
 	
 	var ModalID = "Modal" + counterModel;
+	var ModalIframeID = "ModalIframe" + counterModel;
 	
 	ModelTemplateNew = window.replaceAll("{MODALID}","Modal" + counterModel,ModelTemplateNew);
 	ModelTemplateNew = window.replaceAll("{MODALIFRAMEID}","ModalIframe" + counterModel,ModelTemplateNew);
 	
 	$(".Models").append(ModelTemplateNew);
+
+	$(".modelCoderSelector").on("keypress", function(e) {
+	    var code = e.keyCode || e.which; 
+	    if (code  == 13) {
+	    try{
+		$modelCoderEditor.getSession().setValue($("#" + ModalIframeID).contents().find($(this).val()).html());
+	    }
+	    catch(err) {
+		alert("Object is not found.");
+	    }
+		e.preventDefault();
+		return false;
+	    }
+	});
+
 //	var $modelCoderEditor = $("#" + ModalID + "modelCoder").ace({ theme: "twilight", lang: "php",width: "100%",height:250 });
 	var $modelCoderEditorTextArea = $("#" + ModalID + "modelCoder");
 //	var $modelCoderAutoCodeEditor = $("#" + ModalID + "modelCoderAutoCode").ace({ theme: "twilight", lang: "php",width: "100%",height:250 });
