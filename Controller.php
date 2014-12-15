@@ -90,6 +90,7 @@ class Controller extends BaseController {
 
     public function actionDefine() {
 
+	HTMLIntegratorBootstrapAsset::register($this->getView());
 	if (Yii::$app->request->isPost) {
 
 	    $post = Yii::$app->request->post();
@@ -304,7 +305,6 @@ class Controller extends BaseController {
 
 	include('includeFileExtra.php');
 
-	$HtmlFile = str_replace('</body>', $js, $HtmlFile);
 	$html = str_get_dom($HtmlFile);
 	if (!is_null($selector)):
 
@@ -326,10 +326,18 @@ class Controller extends BaseController {
 	foreach ($html('link') as $link):
 	    $link->href = Yii::getAlias('@web/assets/' . $folderName . '/') . $link->href;
 	endforeach;
+	
+	foreach ($html('script') as $script):
+		$script->setOuterText('');
+	endforeach;
 
-	dom_format($html, array('attributes_case' => CASE_LOWER));
+//	dom_format($html, array('attributes_case' => CASE_LOWER));
+	
+	$resultHtml = $this->beautifyHtml(null,$html);
+	
+	$resultHtml = str_replace('</body>', $js, $resultHtml);
 
-	echo $html;
+	return $resultHtml;
     }
 
     private function GetContent($HtmlFile, $genfilename) {
@@ -549,7 +557,7 @@ class Controller extends BaseController {
 	endforeach;
     }
 
-    private function beautifyHtml($source, $html = null) {
+    private function beautifyHtml($source = null, $html = null) {
 	if (is_null($html)) {
 	    $html = str_get_dom($source);
 	}

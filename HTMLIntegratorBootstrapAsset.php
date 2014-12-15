@@ -14,21 +14,17 @@ namespace serhatozles\themeintegrator;
  * @author Serhat OZLES <serhatozles@gmail.com>
  * @since 1.0
  */
-class HTMLIntegratorAsset extends \yii\web\AssetBundle
+class HTMLIntegratorBootstrapAsset extends \yii\web\AssetBundle
 {
     
-    public $sourcePath = '@vendor/serhatozles/yii2-htmltemplateintegrator/ace';
+    public $sourcePath = '@vendor/serhatozles/yii2-htmltemplateintegrator/assets';
     public $css = [
-//        'bootstrap.css',
+        'css/bootstrap.min.css',
     ];
     public $js = [
-	'ace/ace.js',
-//	'ace/theme-twilight.js',
-	'ace/mode-php.js',
-	'jquery-ace.min.js',
     ];
     public $depends = [
-	'yii\web\YiiAsset',
+	'yii\bootstrap\BootstrapAsset'
     ];
 
 }
