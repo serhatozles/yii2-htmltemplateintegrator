@@ -1,9 +1,7 @@
 HTML Template Integrator
 ========================
-
 [![Latest Stable Version](https://poser.pugx.org/serhatozles/yii2-htmltemplateintegrator/v/stable.svg)](https://packagist.org/packages/serhatozles/yii2-htmltemplateintegrator) [![Total Downloads](https://poser.pugx.org/serhatozles/yii2-htmltemplateintegrator/downloads.svg)](https://packagist.org/packages/serhatozles/yii2-htmltemplateintegrator) [![Latest Unstable Version](https://poser.pugx.org/serhatozles/yii2-htmltemplateintegrator/v/unstable.svg)](https://packagist.org/packages/serhatozles/yii2-htmltemplateintegrator) [![License](https://poser.pugx.org/serhatozles/yii2-htmltemplateintegrator/license.svg)](https://packagist.org/packages/serhatozles/yii2-htmltemplateintegrator)
 ------------
-
 Installation
 ------------
 
