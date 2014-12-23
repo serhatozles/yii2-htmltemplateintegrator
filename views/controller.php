@@ -59,6 +59,15 @@ $(document).on("click",".addAction",function(){
 	alert("There is another action with the same name.");
     }
 });
+
+$(".controllerActionAddName").change(function(){
+    str = $(this).val();
+    str = str.replace(/\b[a-z]/g, function(letter) {
+	return letter.toUpperCase();
+    });
+    str = str.replace(/\s+/g, "");
+    $(this).val(str);
+});
     ';
 $this->registerJs($js, \yii\web\View::POS_READY);
 
@@ -89,7 +98,7 @@ $this->beginContent(__DIR__ . '/layouts/main.php');
 
     			    </div>
     			    <div class="panel-footer">
-				    <?php echo Html::input('text', 'controllerActionAddName', '', ['class' => 'form-control']); ?><br />
+				    <?php echo Html::input('text', 'controllerActionAddName', '', ['class' => 'form-control controllerActionAddName']); ?><br />
     				<div class="row">
     				    <div class="col-md-7">
 					    <?php echo Html::dropDownList('controllerAddFile', $fileList, $fileList, ['class' => 'form-control']); ?>
@@ -148,7 +157,7 @@ $this->beginContent(__DIR__ . '/layouts/main.php');
 
     				    </div>
     				    <div class="panel-footer">
-					    <?php echo Html::input('text', 'controllerActionAddName', '', ['class' => 'form-control']); ?><br />
+					    <?php echo Html::input('text', 'controllerActionAddName', '', ['class' => 'form-control controllerActionAddName']); ?><br />
     					<div class="row">
     					    <div class="col-md-7">
 						    <?php echo Html::dropDownList('controllerAddFile', $fileList, $fileList, ['class' => 'form-control']); ?>
