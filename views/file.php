@@ -19,6 +19,29 @@ $js .= 'window.general = ' . json_encode($generalVariable) . ';';
 $this->registerJs($js, \yii\web\View::POS_READY);
 
 $js = '
+var ControllerTemplate = $(".ControllerTemplate").html();
+
+var counter = 0;
+var ControllerName = "' . $MainControllerName . '";
+$(document).on("click",".addController",function(){
+    counter++;
+    var ControllerTemplateNew = ControllerTemplate.replace("ControllerNameChange[]","controllerName[" + counter + "]");
+    ControllerTemplateNew = ControllerTemplateNew.replace("ControllerActionChange[]","controllerAction[" + counter + "][]");
+    ControllerTemplateNew = ControllerTemplateNew.replace(ControllerName,ControllerName + counter);
+    $(".Controllers").append(ControllerTemplateNew);
+});
+$(document).on("click",".removeController",function(){
+    if($(".Controllers .ControllerList").length > 1){
+	$(this).closest(".ControllerList").remove();
+    }else{
+	alert("You can\'t this because you have a controller!");
+    }
+});
+    ';
+$this->registerJs($js, \yii\web\View::POS_READY);
+
+
+$js = '
 var ModelTemplate = $(".ModelListTemplate").html();
 
 var counterModel = 0;
@@ -27,8 +50,8 @@ var htiHtmlList = Array();
 var htiHtmlSelectList = Array();
 $(document).on("click",".addModel",function(){
     var modelNameAutoComplete = $("#modelNameAutoComplete").val();
-    var modelGenerateAction = $("#modelGenerateAction option:selected").text();
-    var modelActionFile = $("#modelGenerateAction").val();
+    var modelGenerateAction = $("#modelGenerateAction").val();
+    var modelActionFile = window.general["ActionList"][modelGenerateAction];
     var modelWebAdress = window.general["webTemplateAddress"];
     var contentSelector = $("input[name=contentselector]").val();
 //    $("#modelNameAutoComplete").val("");
@@ -173,19 +196,6 @@ $(document).on("click",".addModel",function(){
 
 			});
 
-		    }else if($selectorAutoCode == "Form"){
-		    
-			$ModelAutoCode += "<?php ${MODELVARIABLENAME}Form = ActiveForm::begin([\"id\" => \"{MODELVARIABLENAME}Form\"]); ?>" + "\r\n";
-		    
-			$.each(window.general.modelList[modelNameAutoComplete], function(index, value) {
-
-			    $ModelAutoCode += "<?php echo ${MODELVARIABLENAME}Form->field({MODELVARIABLENAME}, \"" + index + "\"); ?>\r\n";
-			    $ModelAutoCode += "<?php echo ${MODELVARIABLENAME}Form->field({MODELVARIABLENAME}, \"" + index + "\")->textArea([\"rows\" => 6]); ?>\r\n";
-
-			});
-			
-			$ModelAutoCode += "<?php ActiveForm::end(); ?>" + "\r\n";
-		    
 		    }
 		    
 		    $("#" + $modalid).parent().find("textarea.modelCoderAutoCode").val($ModelAutoCode);
@@ -264,8 +274,42 @@ $this->beginContent(__DIR__ . '/layouts/main.php');
 
 	if (count($fileList) > 0) {
 	    ?>
+    	<div class="ControllerTemplate" style="display:none;">
+    	    <div class="col-md-4 ControllerList">
+    		<div class="panel panel-default">
+    		    <div class="panel-body">
+			    <?php echo Html::label('Controller Name:'); ?>
+			    <?php echo Html::input('text', 'ControllerNameChange[]', $MainControllerName, ['class' => 'form-control']); ?><hr />
+			    <?php echo Html::label('Actions:'); ?>
+			    <?php echo Html::dropDownList('ControllerActionChange[]', $ActionList, $ActionList, ['class' => 'form-control', 'multiple' => true, 'size' => 6]); ?>
+    		    </div>
+    		    <div class="panel-footer"><?php echo Html::button('Remove', ['class' => 'btn btn-danger removeController']); ?></div>
+    		</div>
+    	    </div>
+    	</div>
 	    <?php echo Html::beginForm(); ?>
     	<hr/>
+
+
+    	<div class="panel panel-default">
+    	    <div class="panel-heading">Controllers:</div>
+    	    <div class="panel-body">
+    		<div class="row Controllers">
+    		    <div class="col-md-4 ControllerList">
+    			<div class="panel panel-default">
+    			    <div class="panel-body">
+				    <?php echo Html::label('Controller Name:'); ?>
+				    <?php echo Html::input('text', 'controllerName[0]', $MainControllerName, ['class' => 'form-control']); ?><hr />
+				    <?php echo Html::label('Actions:'); ?>
+				    <?php echo Html::dropDownList('controllerAction[0][]', $ActionList, $ActionList, ['class' => 'form-control', 'multiple' => true, 'size' => 6]); ?>
+    			    </div>
+    			    <div class="panel-footer"><?php echo Html::button('Remove', ['class' => 'btn btn-danger removeController']); ?></div>
+    			</div>
+    		    </div>
+    		</div>
+    	    </div>
+    	    <div class="panel-footer"><?php echo Html::button('Add Controller', ['class' => 'btn btn-success addController']); ?></div>
+    	</div>
 
     	<div class="panel panel-default">
     	    <div class="panel-heading">Models:</div>
@@ -328,7 +372,7 @@ $this->beginContent(__DIR__ . '/layouts/main.php');
     					    </div>
     					    <div class="col-md-6">
 						    <?php echo Html::label('Helper Code Type:'); ?>
-						    <?php echo Html::dropDownList('', null, ['Many' => 'Many', 'One' => 'One', 'Form' => 'Form'], ['class' => 'form-control modelCoderAutoCodeSelect']); ?>
+						    <?php echo Html::dropDownList('', null, ['Many' => 'Many', 'One' => 'One'], ['class' => 'form-control modelCoderAutoCodeSelect']); ?>
     						<hr />
 						    <?php echo Html::label('Helper Code List:'); ?>
     						<div class="text-left" style="height:250px;">
@@ -391,18 +435,18 @@ $this->beginContent(__DIR__ . '/layouts/main.php');
     	    <div class="col-md-6 text-center">
     		<div class="panel panel-default">
     		    <div class="panel-body">
-			<?php echo Html::submitButton('Generate', ['class' => 'btn btn-success']); ?>
+			    <?php echo Html::label('Which file will use for layout?:'); ?>
+			    <?php echo Html::dropDownList('file', null, $fileList, ['class' => 'form-control']); ?>
     		    </div>
+    		    <div class="panel-footer"><?php echo Html::submitButton('Generate', ['class' => 'btn btn-success']); ?></div>
     		</div>
     	    </div>
     	</div>
 	    <?php echo Html::input('hidden', 'headerselector', $headerSelector); ?>
 	    <?php echo Html::input('hidden', 'contentselector', $contentSelector); ?>
 	    <?php echo Html::input('hidden', 'footerselector', $footerSelector); ?>
-	    <?php echo Html::input('hidden', 'controllerList', json_encode($controllerList)); ?>
-	    <?php echo Html::input('hidden', 'file', $file); ?>
 	    <?php echo Html::input('hidden', 'folder', $folder); ?>
-	    <?php echo Html::input('hidden', 'step', '3'); ?>
+	    <?php echo Html::input('hidden', 'step', '2'); ?>
 	    <?php echo Html::endForm(); ?>
 	    <?php
 	} else {
