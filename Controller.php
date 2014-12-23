@@ -292,24 +292,6 @@ class Controller extends BaseController {
 //
 //		endforeach;
 
-
-//		echo '<textarea style="width:800px;height:500px;">';
-//		print_r($this->urlReplace);
-//		echo '</textarea>';
-//		echo '<textarea style="width:800px;height:500px;">';
-//		print_r($this->general['ControllersList']);
-//		echo '</textarea>';
-//		echo '<textarea style="width:800px;height:500px;">';
-//		print_r($this->general['ActionsList']);
-//		echo '</textarea>';
-//		echo '<textarea style="width:800px;height:500px;">';
-//		print_r($this->general['ModelsCodeList']);
-//		echo '</textarea>';
-//		echo '<textarea style="width:800px;height:500px;">';
-//		print_r($controllerList);
-//		echo '</textarea>';
-//		exit;
-
 		$this->layoutSource = $this->GenerateLayoutContent($this->layoutSourceFirst);
 
 		$this->generateAssetList($folderName);
