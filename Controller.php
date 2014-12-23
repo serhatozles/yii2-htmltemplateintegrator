@@ -98,11 +98,9 @@ class Controller extends BaseController {
 	    $folderName = $post['folder'];
 	    $folder = $this->templatePath . $post['folder'];
 	    $fileList = $this->getHtml($folder);
+
 	    if ($post['step'] == 1) {
 
-		HTMLIntegratorAsset::register($this->getView());
-
-		$modelList = $this->getModels();
 		$headerSelector = $post['headerselector'];
 		$contentSelector = $post['contentselector'];
 		$footerSelector = $post['footerselector'];
@@ -121,6 +119,58 @@ class Controller extends BaseController {
 
 		    $ActionList[] = $genfilename;
 		    $generalVariable['ActionList'][$genfilename] = $fileList[$i];
+		    $generalVariable['ActionGenList'][$fileList[$i]] = $genfilename;
+
+		endfor;
+
+		$generalVariable['webTemplateAddress'] = Yii::getAlias('@web/../template/' . $folderName . '/');
+
+		$fileList = array_combine($fileList, $fileList);
+
+		$MainControllerName = $this->nameGenerator($folderName);
+
+		return $this->renderFile(__DIR__ . "/views/controller.php", [
+			    'fileList' => $fileList,
+			    'folder' => $folderName,
+			    'MainControllerName' => $MainControllerName,
+			    'generalVariable' => $generalVariable,
+			    'headerSelector' => $headerSelector,
+			    'contentSelector' => $contentSelector,
+			    'footerSelector' => $footerSelector,
+		]);
+	    } elseif ($post['step'] == 2) {
+
+		HTMLIntegratorAsset::register($this->getView());
+
+		$modelList = $this->getModels();
+		$headerSelector = $post['headerselector'];
+		$contentSelector = $post['contentselector'];
+		$footerSelector = $post['footerselector'];
+		$file = $post['file'];
+		$controllerList = $post['ControllerList'];
+
+		$ActionList = [];
+		$generalVariable = [];
+
+		foreach ($controllerList as $ControllerKey => $ControllerInfo):
+
+		    foreach ($ControllerInfo['ActionList'] as $ControllerActionKey => $ControllerAction):
+			$ActionList[$ControllerInfo['ActionFileName'][$ControllerActionKey]] = $ControllerInfo['Name'] . '>' . $ControllerAction;
+		    endforeach;
+
+		endforeach;
+
+		for ($i = 0; $i < count($fileList); $i++):
+
+		    $filename = pathinfo($fileList[$i]);
+		    $genfilename = $this->nameGenerator($filename['filename']);
+
+		    if ($this->validatesAsInt($genfilename[0])) {
+			$genfilename = 'Html' . $genfilename;
+		    }
+
+//		    $ActionList[] = $genfilename;
+		    $generalVariable['ActionList'][$genfilename] = $fileList[$i];
 
 		endfor;
 
@@ -128,7 +178,7 @@ class Controller extends BaseController {
 		$generalVariable['modelList'] = ArrayHelper::map($modelList, 'ModelName', 'ModelAttr');
 		$generalVariable['modelListName'] = ArrayHelper::map($modelList, 'ModelName', 'ModelName');
 
-		$ActionList = array_combine($ActionList, $ActionList);
+//		$ActionList = array_combine($ActionList, $ActionList);
 		$fileList = array_combine($fileList, $fileList);
 
 		$MainControllerName = $this->nameGenerator($folderName);
@@ -142,8 +192,10 @@ class Controller extends BaseController {
 			    'headerSelector' => $headerSelector,
 			    'contentSelector' => $contentSelector,
 			    'footerSelector' => $footerSelector,
+			    'controllerList' => $controllerList,
+			    'file' => $file,
 		]);
-	    } elseif ($post['step'] == 2) {
+	    } elseif ($post['step'] == 3) {
 
 		$fileName = $post['file'];
 		$this->folderName = $folderName;
@@ -158,6 +210,7 @@ class Controller extends BaseController {
 		$modelGenerateVariableName = $post['modelGenerateVariableName'];
 		$modelGenerateModelID = $post['modelGenerateModelID'];
 		$modelGenerateActionVariables = $post['modelGenerateActionVariables'];
+		$controllerList = json_decode($post['controllerList'], true);
 
 		$this->assetGeneral = $this->nameGenerator($this->folderName);
 		$this->layoutGeneral = strtolower($this->nameGenerator($this->folderName));
@@ -185,8 +238,8 @@ class Controller extends BaseController {
 
 		    $this->urlReplace[$fileList[$i]] = '<?=Url::to(["/' . $folderName . '/' . strtolower($genfilename) . '"]); ?>';
 
-		    $this->general['ContentsList'][$genfilename]['source'] = $this->GetContent($HtmlFile, $genfilename);
-		    $this->general['ContentsList'][$genfilename]['file'] = $fileList[$i];
+//		    $this->general['ContentsList'][$genfilename]['source'] = $this->GetContent($HtmlFile, $genfilename);
+//		    $this->general['ContentsList'][$genfilename]['file'] = $fileList[$i];
 
 		    $this->assetsList[$genfilename]['fileName'] = $fileList[$i];
 		    $this->assetsList[$genfilename]['asset'] = $this->getAssets($HtmlFile);
@@ -197,8 +250,20 @@ class Controller extends BaseController {
 
 		    $this->general['ActionsList'][$genfilename]['actionName'] = ucwords(strtolower($genfilename));
 		    $this->general['ActionsList'][$genfilename]['fileName'] = $genfilename;
+		    
+		    unset($HtmlFile);
 
 		endfor;
+
+		foreach ($controllerList as $controllerListInfo):
+
+		    $this->general['ControllersList'][$controllerListInfo['Name']] = $controllerListInfo;
+
+		    foreach ($controllerListInfo['ActionList'] as $key => $controllerActionUrl):
+			$this->urlReplace[$controllerListInfo['ActionFileName'][$key]] = '<?=Url::to(["/' . strtolower($controllerListInfo['Name']) . '/' . strtolower($controllerActionUrl) . '"]); ?>';
+		    endforeach;
+
+		endforeach;
 
 		/*
 		 * This code is generating ModelsCode into Controller's action.
@@ -217,15 +282,33 @@ class Controller extends BaseController {
 
 		endif;
 
-		foreach ($controllerName as $key => $controlName):
+//		foreach ($controllerName as $key => $controlName):
+//
+//		    $this->general['ControllersList'][$controlName] = $controllerAction[$key];
+//
+//		    foreach ($controllerAction[$key] as $controllerActionUrl):
+//			$this->urlReplace[$this->listOriginal[$controllerActionUrl]] = '<?=Url::to(["/' . strtolower($controlName) . '/' . strtolower($controllerActionUrl) . '"]); ? >';
+//		    endforeach;
+//
+//		endforeach;
 
-		    $this->general['ControllersList'][$controlName] = $controllerAction[$key];
 
-		    foreach ($controllerAction[$key] as $controllerActionUrl):
-			$this->urlReplace[$this->listOriginal[$controllerActionUrl]] = '<?=Url::to(["/' . strtolower($controlName) . '/' . strtolower($controllerActionUrl) . '"]); ?>';
-		    endforeach;
-
-		endforeach;
+//		echo '<textarea style="width:800px;height:500px;">';
+//		print_r($this->urlReplace);
+//		echo '</textarea>';
+//		echo '<textarea style="width:800px;height:500px;">';
+//		print_r($this->general['ControllersList']);
+//		echo '</textarea>';
+//		echo '<textarea style="width:800px;height:500px;">';
+//		print_r($this->general['ActionsList']);
+//		echo '</textarea>';
+//		echo '<textarea style="width:800px;height:500px;">';
+//		print_r($this->general['ModelsCodeList']);
+//		echo '</textarea>';
+//		echo '<textarea style="width:800px;height:500px;">';
+//		print_r($controllerList);
+//		echo '</textarea>';
+//		exit;
 
 		$this->layoutSource = $this->GenerateLayoutContent($this->layoutSourceFirst);
 
@@ -326,15 +409,15 @@ class Controller extends BaseController {
 	foreach ($html('link') as $link):
 	    $link->href = Yii::getAlias('@web/assets/' . $folderName . '/') . $link->href;
 	endforeach;
-	
+
 	foreach ($html('script') as $script):
-		$script->setOuterText('');
+	    $script->setOuterText('');
 	endforeach;
 
 //	dom_format($html, array('attributes_case' => CASE_LOWER));
-	
-	$resultHtml = $this->beautifyHtml(null,$html);
-	
+
+	$resultHtml = $this->beautifyHtml(null, $html);
+
 	$resultHtml = str_replace('</body>', $js, $resultHtml);
 
 	return $resultHtml;
@@ -389,8 +472,6 @@ class Controller extends BaseController {
 		$contentSource['source'] = $this->beautifyHtml($contentSource['source']);
 	    } else {
 
-
-
 		$html = str_get_dom($HtmlFile);
 
 		if (!empty($this->headerSelector)) {
@@ -407,6 +488,10 @@ class Controller extends BaseController {
 
 		$contentJavascript = [];
 
+		/*
+		 * We're finding scripts code into "head" tag.
+		 */
+		
 		foreach ($html('head script') as $script):
 		    if (!$script->src) {
 			$js = str_replace('	', "\r\n", $script->getInnerText());
@@ -416,6 +501,10 @@ class Controller extends BaseController {
 			$script->setOuterText('');
 		    }
 		endforeach;
+		
+		/*
+		 * We're finding scripts code into "body" tag.
+		 */
 
 		foreach ($html('body script') as $script):
 		    if (!$script->src) {
@@ -450,6 +539,8 @@ class Controller extends BaseController {
 		$FileCache = new FileCache();
 
 		$selectorList = [];
+		
+		
 
 		foreach ($this->general['ModelsCodeList'][$genfilename] as $ModelsCodeID => $ModelsCodeInfo):
 
@@ -500,10 +591,12 @@ class Controller extends BaseController {
 	    $controllerModelList = [];
 	    $controllerModelListResult = '';
 
-	    foreach ($controller as $actionName):
+	    foreach ($controller['ActionList'] as $key => $actionListName):
 
 		$ActionModelsGen = '';
 		$ActionModelsVariablesGen = '';
+		$actionName = $controllerName . '>' . $actionListName;
+		$actionGenName = $controller['ActionFileGenName'][$key];
 
 		if (count($this->general['ActionModelList'][$actionName]) > 0):
 
@@ -526,12 +619,12 @@ class Controller extends BaseController {
 		endif;
 
 		$controllerActionList = $this->actionTemplate . "\r\n";
-		$controllerActionList = str_replace('{' . self::ACTIONNAME . '}', $this->general['ActionsList'][$actionName]['actionName'], $controllerActionList);
-		$controllerActionList = str_replace('{' . self::ACTIONFILENAME . '}', $this->general['ActionsList'][$actionName]['fileName'], $controllerActionList);
-		$controllerActionList = str_replace('{' . self::ACTIONLAYOUT . '}', $this->general['ActionsList'][$actionName]['layout'], $controllerActionList);
+		$controllerActionList = str_replace('{' . self::ACTIONNAME . '}', $actionListName, $controllerActionList);
+		$controllerActionList = str_replace('{' . self::ACTIONFILENAME . '}', $actionListName, $controllerActionList);
+		$controllerActionList = str_replace('{' . self::ACTIONLAYOUT . '}', $this->general['ActionsList'][$actionGenName]['layout'], $controllerActionList);
 		$controllerActionList = str_replace('{' . self::ACTIONMODELS . '}', $ActionModelsGen, $controllerActionList);
 		$controllerActionList = str_replace('{' . self::ACTIONMODELSVARIABLES . '}', $ActionModelsVariablesGen, $controllerActionList);
-		$controllerActionList = str_replace('{' . self::ACTIONVARIABLES . '}', $this->general['ActionVariablesList'][$actionName], $controllerActionList);
+		$controllerActionList = str_replace('{' . self::ACTIONVARIABLES . '}', $this->general['ActionVariablesList'][$actionGenName], $controllerActionList);
 		$controllerActionListResult .= $controllerActionList;
 
 	    endforeach;
@@ -693,41 +786,48 @@ use yii\helpers\Html;
 
     private function generateContent() {
 
-	foreach ($this->general['ControllersList'] as $controllerName => $actionList):
+	foreach ($this->general['ControllersList'] as $controllerName => $controller):
 
 	    $fileSaveName = Yii::getAlias('@app/views/' . strtolower($controllerName) . '/');
 	    $this->folderCreate($fileSaveName);
 
-	    foreach ($actionList as $actionName):
+	    foreach ($controller['ActionList'] as $key => $actionListName):
 
+		$actionGenName = $controller['ActionFileGenName'][$key];
+		$actionOrginalName = $controller['ActionFileName'][$key];
+		$actionName = $controllerName . '>' . $actionListName;
+		
 		$fileSaveName = Yii::getAlias('@app/views/' . strtolower($controllerName) . '/');
+		
+		$HtmlFile = file_get_contents($this->templatePath . $this->folderName . '/' . $actionOrginalName);
 
-		$content = $this->general['ContentsList'][$actionName];
+//		$content = $this->general['ContentsList'][$actionGenName];
+		$content = $this->GetContent($HtmlFile, $actionName);
 
-		$content['source']['source'] = strtr($content['source']['source'], $this->urlReplace);
+		$content['source'] = strtr($content['source'], $this->urlReplace);
 
 		$OverContent = '<?php
 use yii\helpers\Html;
 use yii\helpers\Url;
 
 /* @var $this yii\web\View */
-$this->title = "' . $actionName . '";
+$this->title = "' . $actionListName . '";
     ';
-		foreach ($content['source']['javascript'] as $javascript):
-		    $javascriptInside = "\$this->registerJs('" . addslashes($javascript['js']) . "',\yii\web\View::" . $javascript['position'] . ");";
+		foreach ($content['javascript'] as $javascript):
+		    $javascriptInside = "\$this->registerJs(\"" . addslashes($javascript['js']) . "\",\yii\web\View::" . $javascript['position'] . ");";
 		    $OverContent .= $javascriptInside;
 		endforeach;
 		$OverContent .= '
 ?>
 ';
 
-		$content['source']['source'] = $OverContent . $content['source']['source'];
+		$content['source'] = $OverContent . $content['source'];
 
-		$fileSaveName .= $actionName . '.php';
+		$fileSaveName .= $actionListName . '.php';
 		$fileArray['FileName'] = $fileSaveName;
-		$fileArray['Files'] = [$content['file']];
+		$fileArray['Files'] = [$actionOrginalName];
 		$this->generatedFiles[] = $fileArray;
-		$this->save($fileSaveName, $content['source']['source']);
+		$this->save($fileSaveName, $content['source']);
 
 	    endforeach;
 
