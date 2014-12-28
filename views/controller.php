@@ -60,7 +60,7 @@ $(document).on("click",".addAction",function(){
     }
 });
 
-$(".controllerActionAddName").change(function(){
+$(document).on("change", ".controllerActionAddName", function(){
     str = $(this).val();
     str = str.replace(/\b[a-z]/g, function(letter) {
 	return letter.toUpperCase();

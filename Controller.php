@@ -986,6 +986,7 @@ $this->title = "' . $actionListName . '";
 		    $ModelInside = file_get_contents($dir . $file);
 
 		    if (preg_match('@attributeLabels[^>]+return(.*?)\}@si', $ModelInside, $ModelAttr)):
+			$ModelAttr[1] = preg_replace("@Yii::t\('.*?'.*?'(.*?)'\)@si",'$1',$ModelAttr[1]);	
 			eval('$ModelAttr = ' . $ModelAttr[1]);
 			$thelistinside['ModelName'] = $file_info['filename'];
 			$thelistinside['ModelAttr'] = $ModelAttr;
