@@ -232,27 +232,6 @@ $(document).on("click",".removeModel",function(){
     ';
 $this->registerJs($js, \yii\web\View::POS_READY);
 
-//$js = '
-//    
-//';
-//$this->registerJs($js, \yii\web\View::POS_READY);
-//$js = '$(".ModelCode").textcomplete([
-//    { // tech companies
-//        words: ["apple", "google", "facebook", "github"],
-//        match: /\b(\w{2,})$/,
-//        search: function (term, callback) {
-//            callback($.map(this.words, function (word) {
-//                return word.indexOf(term) === 0 ? word : null;
-//            }));
-//        },
-//        index: 1,
-//        replace: function (word) {
-//            return word + " ";
-//        }
-//    }
-//]);';
-//$this->registerJs($js, \yii\web\View::POS_READY);
-
 $this->beginContent(__DIR__ . '/layouts/main.php');
 ?>
 <div class="row">
