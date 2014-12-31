@@ -81,6 +81,8 @@ class Controller extends BaseController {
     public $layoutSourceFirst = '';
     public $folderName = null;
     public $urlReplace = [];
+    public $createAssets;
+    public $createLayouts;
 
     function init() {
 	$this->appname = str_replace('app-', '', Yii::$app->id);
@@ -104,6 +106,8 @@ class Controller extends BaseController {
 		$headerSelector = $post['headerselector'];
 		$contentSelector = $post['contentselector'];
 		$footerSelector = $post['footerselector'];
+		$createAssets = $post['createAssets'];
+		$createLayouts = $post['createLayouts'];
 
 		$ActionList = [];
 		$generalVariable = [];
@@ -137,6 +141,8 @@ class Controller extends BaseController {
 			    'headerSelector' => $headerSelector,
 			    'contentSelector' => $contentSelector,
 			    'footerSelector' => $footerSelector,
+			    'createAssets' => $createAssets,
+			    'createLayouts' => $createLayouts,
 		]);
 	    } elseif ($post['step'] == 2) {
 
@@ -146,6 +152,8 @@ class Controller extends BaseController {
 		$headerSelector = $post['headerselector'];
 		$contentSelector = $post['contentselector'];
 		$footerSelector = $post['footerselector'];
+		$createAssets = $post['createAssets'];
+		$createLayouts = $post['createLayouts'];
 		$file = $post['file'];
 		$controllerList = $post['ControllerList'];
 
@@ -193,6 +201,8 @@ class Controller extends BaseController {
 			    'contentSelector' => $contentSelector,
 			    'footerSelector' => $footerSelector,
 			    'controllerList' => $controllerList,
+			    'createAssets' => $createAssets,
+			    'createLayouts' => $createLayouts,
 			    'file' => $file,
 		]);
 	    } elseif ($post['step'] == 3) {
@@ -211,15 +221,23 @@ class Controller extends BaseController {
 		$modelGenerateModelID = $post['modelGenerateModelID'];
 		$modelGenerateActionVariables = $post['modelGenerateActionVariables'];
 		$controllerList = json_decode($post['controllerList'], true);
+		$createAssets = $post['createAssets'];
+		$createLayouts = $post['createLayouts'];
+		$this->createAssets = $createAssets;
+		$this->createLayouts = $createLayouts;
 
 		$this->assetGeneral = $this->nameGenerator($this->folderName);
 		$this->layoutGeneral = strtolower($this->nameGenerator($this->folderName));
 
-		foreach ($modelGenerateModelID as $key => $ModelID):
+		if (count($modelGenerateModelID) > 0):
 
-		    $this->general['ModelsCodeList'][$modelGenerateAction[$key]][$ModelID]['VariableName'] = $modelGenerateVariableName[$key];
+		    foreach ($modelGenerateModelID as $key => $ModelID):
 
-		endforeach;
+			$this->general['ModelsCodeList'][$modelGenerateAction[$key]][$ModelID]['VariableName'] = $modelGenerateVariableName[$key];
+
+		    endforeach;
+
+		endif;
 
 		for ($i = 0; $i < count($fileList); $i++):
 
@@ -250,7 +268,7 @@ class Controller extends BaseController {
 
 		    $this->general['ActionsList'][$genfilename]['actionName'] = ucwords(strtolower($genfilename));
 		    $this->general['ActionsList'][$genfilename]['fileName'] = $genfilename;
-		    
+
 		    unset($HtmlFile);
 
 		endfor;
@@ -292,13 +310,21 @@ class Controller extends BaseController {
 //
 //		endforeach;
 
-		$this->layoutSource = $this->GenerateLayoutContent($this->layoutSourceFirst);
+		if ($createLayouts == 1):
+		    $this->layoutSource = $this->GenerateLayoutContent($this->layoutSourceFirst);
+		endif;
 
 		$this->generateAssetList($folderName);
 		$this->generateLayoutList($folderName);
 
-		$this->generateAsset();
-		$this->generateLayout();
+		if ($createAssets == 1):
+		    $this->generateAsset();
+		endif;
+
+		if ($createLayouts == 1):
+		    $this->generateLayout();
+		endif;
+
 		$this->generateContent();
 		$this->generateController();
 
@@ -473,7 +499,7 @@ class Controller extends BaseController {
 		/*
 		 * We're finding scripts code into "head" tag.
 		 */
-		
+
 		foreach ($html('head script') as $script):
 		    if (!$script->src) {
 			$js = str_replace('	', "\r\n", $script->getInnerText());
@@ -483,7 +509,7 @@ class Controller extends BaseController {
 			$script->setOuterText('');
 		    }
 		endforeach;
-		
+
 		/*
 		 * We're finding scripts code into "body" tag.
 		 */
@@ -521,8 +547,8 @@ class Controller extends BaseController {
 		$FileCache = new FileCache();
 
 		$selectorList = [];
-		
-		
+
+
 
 		foreach ($this->general['ModelsCodeList'][$genfilename] as $ModelsCodeID => $ModelsCodeInfo):
 
@@ -778,9 +804,9 @@ use yii\helpers\Html;
 		$actionGenName = $controller['ActionFileGenName'][$key];
 		$actionOrginalName = $controller['ActionFileName'][$key];
 		$actionName = $controllerName . '>' . $actionListName;
-		
+
 		$fileSaveName = Yii::getAlias('@app/views/' . strtolower($controllerName) . '/');
-		
+
 		$HtmlFile = file_get_contents($this->templatePath . $this->folderName . '/' . $actionOrginalName);
 
 //		$content = $this->general['ContentsList'][$actionGenName];
@@ -986,7 +1012,7 @@ $this->title = "' . $actionListName . '";
 		    $ModelInside = file_get_contents($dir . $file);
 
 		    if (preg_match('@attributeLabels[^>]+return(.*?)\}@si', $ModelInside, $ModelAttr)):
-			$ModelAttr[1] = preg_replace("@Yii::t\('.*?'.*?'(.*?)'\)@si","'$1'",$ModelAttr[1]);	
+			$ModelAttr[1] = preg_replace("@Yii::t\('.*?'.*?'(.*?)'\)@si", "'$1'", $ModelAttr[1]);
 			eval('$ModelAttr = ' . $ModelAttr[1]);
 			$thelistinside['ModelName'] = $file_info['filename'];
 			$thelistinside['ModelAttr'] = $ModelAttr;

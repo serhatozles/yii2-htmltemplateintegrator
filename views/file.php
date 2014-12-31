@@ -400,6 +400,8 @@ $this->beginContent(__DIR__ . '/layouts/main.php');
 	    <?php echo Html::input('hidden', 'contentselector', $contentSelector); ?>
 	    <?php echo Html::input('hidden', 'footerselector', $footerSelector); ?>
 	    <?php echo Html::input('hidden', 'controllerList', json_encode($controllerList)); ?>
+	    <?php echo Html::input('hidden', 'createAssets', $createAssets); ?>
+	    <?php echo Html::input('hidden', 'createLayouts', $createLayouts); ?>
 	    <?php echo Html::input('hidden', 'file', $file); ?>
 	    <?php echo Html::input('hidden', 'folder', $folder); ?>
 	    <?php echo Html::input('hidden', 'step', '3'); ?>

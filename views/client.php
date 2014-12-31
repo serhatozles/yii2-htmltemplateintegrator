@@ -13,7 +13,7 @@ $this->beginContent(__DIR__ . '/layouts/main.php');
 	    ?>
 	    <?php echo Html::beginForm(); ?>
 	    <?php echo Html::input('hidden', 'step', '1'); ?>
-	<hr />
+    	<hr />
     	<div class="row">
     	    <div class="col-md-6 text-center">
     		<div class="panel panel-default">
@@ -31,8 +31,18 @@ $this->beginContent(__DIR__ . '/layouts/main.php');
     		<div class="panel panel-default">
     		    <div class="panel-body">
 			    <?php echo Html::label('Template:'); ?>
-			    <?php echo Html::dropDownList('folder', null, $themeList, ['class' => 'form-control']); ?>
-    		    </div>
+			    <?php echo Html::dropDownList('folder', null, $themeList, ['class' => 'form-control']); ?><hr />
+    			<div class="checkbox text-left">
+    			    <label>
+    				<input type="checkbox" value="1" checked="checked" name="createAssets"/> Create Assets
+    			    </label>
+    			</div><hr />
+    			<div class="checkbox text-left">
+    			    <label>
+    				<input type="checkbox" value="1" checked="checked" name="createLayouts"/> Create Layouts
+    			    </label>
+    			</div>
+        		    </div>
     		    <div class="panel-footer"><?php echo Html::submitButton('Next', ['class' => 'btn btn-success']); ?></div>
     		</div>
     	    </div>
