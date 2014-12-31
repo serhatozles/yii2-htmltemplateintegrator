@@ -69,6 +69,10 @@ That's it.
 Screenshot:
 -----
 
+![Screenshot](https://lh3.googleusercontent.com/BcxsybZL5VPpdgHOXNBasmB0H49VEPAM2APwY2EdSTQ=w1044-h474-no)
+![Screenshot](https://lh3.googleusercontent.com/-3JYhRkEYZ-Y/VKQLeVpUz_I/AAAAAAAAAbs/5-9YyUCpfgM/w646-h530-no/HTML%2BTemplate%2BIntegrator%2B2.png)
+![Screenshot](https://lh3.googleusercontent.com/-SQYM4nyDzeg/VKQLeMus-5I/AAAAAAAAAbw/joCW8xPK6Po/w751-h530-no/HTML%2BTemplate%2BIntegrator%2B3.png)
 ![Screenshot](https://lh4.googleusercontent.com/hh_GXCvhZVo64fqWgL5dbeffhF3Hy2Alj7T4WQjN-e0=w762-h530-no)
+![Screenshot](https://lh4.googleusercontent.com/-cokBAxxAgQY/VIgJg4BYXVI/AAAAAAAAAZU/4yQyN1ARDY4/w1042-h217-no/HTML%2BTemplate%2BIntegrator%2B3.png)
 
 [See](https://plus.google.com/u/0/photos/109846768885330232680/albums/6091128953088590609)
