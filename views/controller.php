@@ -109,7 +109,7 @@ $this->beginContent(__DIR__ . '/layouts/main.php');
     			<div class="panel panel-default">
     			    <div class="panel-body ControllerActionList">
 
-				
+
 
     			    </div>
     			    <div class="panel-footer">
@@ -136,7 +136,7 @@ $this->beginContent(__DIR__ . '/layouts/main.php');
     			<div class="col-md-3">
     			    <strong>Name:</strong><br />
     			    {ACTIONNAME}
-				<?php echo Html::input('hidden', 'controllerActionName[]', "{ACTIONNAME}",['class' => 'controllerActionName']); ?>
+				<?php echo Html::input('hidden', 'controllerActionName[]', "{ACTIONNAME}", ['class' => 'controllerActionName']); ?>
     			</div>
     			<div class="col-md-4">
     			    <strong>File:</strong><br />
@@ -167,8 +167,31 @@ $this->beginContent(__DIR__ . '/layouts/main.php');
 				    <?php echo Html::label('Actions:'); ?>
     				<div class="panel panel-default">
     				    <div class="panel-body ControllerActionList">
+					
+					<?php if(in_array("index.html",$fileList)) : ?>
 
-
+					    <div style="background-color:#F5F5F5;" class="panel panel-default ActionItem">
+						<div class="panel-body">
+						    <div class="row">
+							<div class="col-md-3">
+							    <strong>Name:</strong><br>
+							    Index
+							    <input type="hidden" value="Index" name="ControllerList[0][ActionList][]" class="controllerActionName">
+							</div>
+							<div class="col-md-4">
+							    <strong>File:</strong><br>
+							    index.html
+							    <input type="hidden" value="index.html" name="ControllerList[0][ActionFileName][]"/>
+							    <input type="hidden" value="Index" name="ControllerList[0][ActionFileGenName][]"/>
+							</div>
+							<div class="col-md-5 text-right">
+							    <button class="btn btn-danger removeAction" type="button">Remove</button>
+							</div>
+						    </div>
+						</div>
+					    </div>
+					    
+					<?php endif; ?>
 
     				    </div>
     				    <div class="panel-footer">
