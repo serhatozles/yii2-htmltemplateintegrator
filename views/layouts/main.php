@@ -30,7 +30,7 @@ AppAsset::register($this);
 	'brandLabel' => 'HTML Template Integrator',
 	'brandUrl' => Url::to(['integrator/define']),
 	'options' => [
-	    'class' => 'navbar-inverse navbar-fixed-top',
+	    'class' => 'navbar-inverse',
 	],
     ]);
 
@@ -46,7 +46,7 @@ AppAsset::register($this);
     NavBar::end();
     ?>
 
-    <div class="container">
+    <div class="container" style="padding-top:0px;">
 	<?= $content ?>
     </div>
 </div>
