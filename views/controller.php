@@ -68,6 +68,21 @@ $(document).on("change", ".controllerActionAddName", function(){
     str = str.replace(/\s+/g, "");
     $(this).val(str);
 });
+
+$(".NextButton").click(function(){
+
+    if($(".Controllers .ActionItem").length > 0){
+    
+	$("form").submit();
+    
+    }else{
+    
+	alert("You have to add a action.");
+
+    }
+
+});
+
     ';
 $this->registerJs($js, \yii\web\View::POS_READY);
 
@@ -193,7 +208,7 @@ $this->beginContent(__DIR__ . '/layouts/main.php');
 			    <?php echo Html::label('Which file will use for layout?:'); ?>
 			    <?php echo Html::dropDownList('file', null, $fileList, ['class' => 'form-control']); ?>
     		    </div>
-    		    <div class="panel-footer"><?php echo Html::submitButton('Next', ['class' => 'btn btn-success']); ?></div>
+    		    <div class="panel-footer"><?php echo Html::button('Next', ['class' => 'btn btn-success NextButton']); ?></div>
     		</div>
     	    </div>
     	</div>
