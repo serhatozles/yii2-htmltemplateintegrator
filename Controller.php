@@ -81,8 +81,6 @@ class Controller extends BaseController {
     public $layoutSourceFirst = '';
     public $folderName = null;
     public $urlReplace = [];
-    public $createAssets;
-    public $createLayouts;
 
     function init() {
 	$this->appname = str_replace('app-', '', Yii::$app->id);
@@ -223,8 +221,6 @@ class Controller extends BaseController {
 		$controllerList = json_decode($post['controllerList'], true);
 		$createAssets = $post['createAssets'];
 		$createLayouts = $post['createLayouts'];
-		$this->createAssets = $createAssets;
-		$this->createLayouts = $createLayouts;
 
 		$this->assetGeneral = $this->nameGenerator($this->folderName);
 		$this->layoutGeneral = strtolower($this->nameGenerator($this->folderName));
