@@ -193,7 +193,7 @@ $this->beginContent(__DIR__ . '/layouts/main.php');
 			    <?php echo Html::label('Which file will use for layout?:'); ?>
 			    <?php echo Html::dropDownList('file', null, $fileList, ['class' => 'form-control']); ?>
     		    </div>
-    		    <div class="panel-footer"><?php echo Html::submitButton('Generate', ['class' => 'btn btn-success']); ?></div>
+    		    <div class="panel-footer"><?php echo Html::submitButton('Next', ['class' => 'btn btn-success']); ?></div>
     		</div>
     	    </div>
     	</div>
