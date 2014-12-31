@@ -68,4 +68,7 @@ That's it.
 
 Screenshot:
 -----
+
+![Screenshot](https://lh4.googleusercontent.com/hh_GXCvhZVo64fqWgL5dbeffhF3Hy2Alj7T4WQjN-e0=w762-h530-no)
+
 [See](https://plus.google.com/u/0/photos/109846768885330232680/albums/6091128953088590609)
