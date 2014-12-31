@@ -34,12 +34,12 @@ $this->beginContent(__DIR__ . '/layouts/main.php');
 			    <?php echo Html::dropDownList('folder', null, $themeList, ['class' => 'form-control']); ?><hr />
     			<div class="checkbox text-left">
     			    <label>
-    				<input type="checkbox" value="1" checked="checked" name="createAssets"/> Create Assets
+    				<input type="checkbox" value="1" checked="checked" name="createAssets"/> Assets
     			    </label>
     			</div><hr />
     			<div class="checkbox text-left">
     			    <label>
-    				<input type="checkbox" value="1" checked="checked" name="createLayouts"/> Create Layouts
+    				<input type="checkbox" value="1" checked="checked" name="createLayouts"/> Layouts
     			    </label>
     			</div>
         		    </div>
