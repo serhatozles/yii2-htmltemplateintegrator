@@ -12,7 +12,6 @@ namespace serhatozles\themeintegrator;
 
 use Yii;
 use yii\helpers\Json;
-use serhatozles\simplehtmldom\SimpleHTMLDom;
 use yii\helpers\ArrayHelper;
 use yii\helpers\FileHelper;
 use yii\helpers\Url;
@@ -23,6 +22,8 @@ use yii\caching\FileCache;
 
 include(__DIR__ . '/ganon/ganon.php');
 include(__DIR__ . '/ganon/third party/jsminplus.php');
+
+require_once(__DIR__ . "/phpQuery.php"); // DOM Selector Include
 
 set_time_limit(0);
 
@@ -392,37 +393,20 @@ class Controller extends BaseController {
 
 	include('includeFileExtra.php');
 
-	$html = str_get_dom($HtmlFile);
-	if (!is_null($selector)):
+	$html = \phpQuery::newDocumentHTML($HtmlFile, "UTF-8");
 
-
-	    $selector = str_replace(':eq(0)', '', $selector);
-
-	    try {
-		return $html($selector, 0)->html();
-	    } catch (Exception $e) {
-		return 'Not Found';
-	    }
-
-	endif;
-
-
-	foreach ($html('img') as $img):
-	    $img->src = Yii::getAlias('@web/assets/' . $folderName . '/') . $img->src;
+	foreach (pq($html)->find('img') as $img):
+	    pq($img)->attr('src', Yii::getAlias('@web/assets/' . $folderName . '/') . pq($img)->attr('src'));
 	endforeach;
-	foreach ($html('link') as $link):
-	    $link->href = Yii::getAlias('@web/assets/' . $folderName . '/') . $link->href;
+	foreach (pq($html)->find('link') as $link):
+	    pq($link)->attr('href', Yii::getAlias('@web/assets/' . $folderName . '/') . pq($link)->attr('href'));
 	endforeach;
 
-	foreach ($html('script') as $script):
-	    $script->setOuterText('');
-	endforeach;
+	pq('script')->remove();
 
-//	dom_format($html, array('attributes_case' => CASE_LOWER));
+	$html = str_replace('</body>', $js, $html);
 
-	$resultHtml = $this->beautifyHtml(null, $html);
-
-	$resultHtml = str_replace('</body>', $js, $resultHtml);
+	$resultHtml = $this->beautifyHtml($html);
 
 	return $resultHtml;
     }
@@ -431,135 +415,71 @@ class Controller extends BaseController {
 
 	if (!empty($this->contentSelector)) {
 
-	    if (!(count($this->general['ModelsCodeList'][$genfilename]) > 0)) { // Code Optimizing...
-		$html = SimpleHTMLDom::str_get_html($HtmlFile);
+	    $html = \phpQuery::newDocumentHTML($HtmlFile, "UTF-8");
 
-		if (!empty($this->headerSelector) && !empty($html->find($this->headerSelector, 0)->innertext)) {
-		    $html->find($this->headerSelector, 0)->innertext = '';
+	    $html[$this->headerSelector] = "";
+	    $html[$this->footerSelector] = "";
+
+	    foreach (pq($html)->find('img') as $img):
+		pq($img)->attr('src', Yii::getAlias('@web/assets/' . $this->layoutGeneral . '/') . pq($img)->attr('src'));
+	    endforeach;
+
+	    $contentJavascript = [];
+
+	    /*
+	     * We're finding scripts code into "head" tag.
+	     */
+
+	    foreach (pq($html)->find('head script') as $script):
+		if (!pq($script)->attr("src")) {
+		    $js = str_replace('	', "\r\n", pq($script)->html());
+		    $contentJavascriptIn['position'] = 'POS_HEAD';
+		    $contentJavascriptIn['js'] = \JSMinPlus::minify($js);
+		    $contentJavascript[] = $contentJavascriptIn;
+		    pq($script)->html("");
 		}
+	    endforeach;
 
-		if (!empty($this->footerSelector) && !empty($html->find($this->footerSelector, 0)->innertext)) {
-		    $html->find($this->footerSelector, 0)->innertext = '';
+	    /*
+	     * We're finding scripts code into "body" tag.
+	     */
+
+	    foreach (pq($html)->find('body script') as $script):
+		if (!pq($script)->attr("src")) {
+		    $js = str_replace('	', "\r\n", pq($script)->html());
+		    $contentJavascriptIn['position'] = 'POS_END';
+		    $contentJavascriptIn['js'] = \JSMinPlus::minify($js);
+		    $contentJavascript[] = $contentJavascriptIn;
+		    pq($script)->html("");
 		}
+	    endforeach;
 
-		foreach ($html->find('img') as $img):
-		    $img->src = Yii::getAlias('@web/assets/' . $this->layoutGeneral . '/') . $img->src;
-		endforeach;
+	    $contentSource['javascript'] = $contentJavascript;
 
-		$contentJavascript = [];
+	    $FileCache = new FileCache();
 
-		foreach ($html->find('head script') as $script):
-		    if (!$script->src) {
-			$js = str_replace('	', "\r\n", $script->innertext);
-			$contentJavascriptIn['position'] = 'POS_HEAD';
-			$contentJavascriptIn['js'] = \JSMinPlus::minify($js);
-			$contentJavascript[] = $contentJavascriptIn;
-			$script->outertext = '';
-		    }
-		endforeach;
-
-		foreach ($html->find('body script') as $script):
-		    if (!$script->src) {
-			$js = str_replace('	', "\r\n", $script->innertext);
-			$contentJavascriptIn['position'] = 'POS_END';
-			$contentJavascriptIn['js'] = \JSMinPlus::minify($js);
-			$contentJavascript[] = $contentJavascriptIn;
-			$script->outertext = '';
-		    }
-		endforeach;
-
-		$contentSource['javascript'] = $contentJavascript;
-		$contentSource['source'] = $html->find($this->contentSelector, 0)->innertext;
-		$html->clear();
-		unset($html);
-
-		$contentSource['source'] = $this->beautifyHtml($contentSource['source']);
-	    } else {
-
-		$html = str_get_dom($HtmlFile);
-
-		if (!empty($this->headerSelector)) {
-		    $html($this->headerSelector, 0)->setInnerText('');
-		}
-
-		if (!empty($this->footerSelector)) {
-		    $html($this->footerSelector, 0)->setInnerText('');
-		}
-
-		foreach ($html('img') as $img):
-		    $img->src = Yii::getAlias('@web/assets/' . $this->layoutGeneral . '/') . $img->src;
-		endforeach;
-
-		$contentJavascript = [];
-
-		/*
-		 * We're finding scripts code into "head" tag.
-		 */
-
-		foreach ($html('head script') as $script):
-		    if (!$script->src) {
-			$js = str_replace('	', "\r\n", $script->getInnerText());
-			$contentJavascriptIn['position'] = 'POS_HEAD';
-			$contentJavascriptIn['js'] = \JSMinPlus::minify($js);
-			$contentJavascript[] = $contentJavascriptIn;
-			$script->setOuterText('');
-		    }
-		endforeach;
-
-		/*
-		 * We're finding scripts code into "body" tag.
-		 */
-
-		foreach ($html('body script') as $script):
-		    if (!$script->src) {
-			$js = str_replace('	', "\r\n", $script->getInnerText());
-			$contentJavascriptIn['position'] = 'POS_END';
-			$contentJavascriptIn['js'] = \JSMinPlus::minify($js);
-			$contentJavascript[] = $contentJavascriptIn;
-			$script->setOuterText('');
-		    }
-		endforeach;
-
-//	    $contentSelecterinLenght = 0;
-//	    $contentSource = '';
-//	    
-//	    foreach($html->find($this->contentSelector) as $contentselect):
-//		
-//		$contentinside = $contentselect->innertext;
-//		$contentlenght = mb_strlen($contentinside,'UTF-8');
-//		
-//		if($contentlenght > $contentSelecterinLenght){
-//		    $contentSource = $contentinside;
-//		    $contentSelecterinLenght = $contentlenght;
-//		}
-//		
-//	    endforeach;
-//	    $contentSource['source'] = $html->find($this->contentSelector, 0)->innertext;
-//	    $html->clear();
-//	    unset($html);
-
-		$contentSource['javascript'] = $contentJavascript;
-
-		$FileCache = new FileCache();
-
-		$selectorList = [];
-
-
+	    $selectorList = [];
+	    
+	    if (count($this->general['ModelsCodeList'][$genfilename]) > 0) :
 
 		foreach ($this->general['ModelsCodeList'][$genfilename] as $ModelsCodeID => $ModelsCodeInfo):
 
 		    $modalCacheGet = json_decode($FileCache->get($ModelsCodeID), true);
 
 		    if (!in_array($modalCacheGet['Selector'], $selectorList)) {
-			$html($modalCacheGet['Selector'], 0)->setOuterText($modalCacheGet['HTML']);
+			pq($html)->find($modalCacheGet['Selector'])->replaceWith($modalCacheGet['HTML']);
 			$selectorList[] = $modalCacheGet['Selector'];
 		    }
 
 		endforeach;
+	    
+	    endif;
 
 
-		$contentSource['source'] = $html($this->contentSelector, 0)->getInnerText();
-		$contentSource['source'] = $this->beautifyHtml($contentSource['source']);
+	    $contentSource['source'] = pq($html)->find($this->contentSelector)->html();
+	    $contentSource['source'] = $this->beautifyHtml($contentSource['source']);
+
+	    if (count($this->general['ModelsCodeList'][$genfilename]) > 0) :
 
 		foreach ($this->general['ModelsCodeList'][$genfilename] as $ModelsCodeID => $ModelsCodeInfo):
 
@@ -578,9 +498,8 @@ class Controller extends BaseController {
 		    $contentSource['source'] = str_replace('{MODELVARIABLENAME}', '$' . $ModalVariableName, $contentSource['source']);
 
 		endforeach;
-	    }
 
-	    unset($html);
+	    endif;
 
 	    return $contentSource;
 	}
@@ -668,19 +587,19 @@ class Controller extends BaseController {
 
     private function GenerateLayoutContent($HtmlFile) {
 
-	$html = SimpleHTMLDom::str_get_html($HtmlFile);
+	$html = \phpQuery::newDocumentHTML($HtmlFile, "UTF-8");
 
-	foreach ($html->find('img') as $img):
-	    $img->src = Yii::getAlias('@web/assets/' . $this->layoutGeneral . '/') . $img->src;
+	foreach (pq($html)->find('img') as $img):
+	    pq($img)->attr('src', Yii::getAlias('@web/assets/' . $this->layoutGeneral . '/') . pq($img)->attr('src'));
 	endforeach;
 
 	$includeFileOver = '<?php
 use yii\helpers\Url;
 ?>';
 
-	if (!empty($this->headerSelector) && !empty($html->find($this->headerSelector, 0)->innertext)) {
-	    $headerSource = $html->find($this->headerSelector, 0)->innertext;
-	    $html->find($this->headerSelector, 0)->innertext = '{HEADERINCLUDE}';
+	$headerSource = pq($this->headerSelector)->html();
+	if (!empty($this->headerSelector) && !empty($headerSource)) {
+	    $html[$this->headerSelector] = '{HEADERINCLUDE}';
 	    $fileSaveName = Yii::getAlias('@app/views/layouts/' . $this->layoutGeneral . '_header.php');
 //	    $headerSource = \serhatozles\htmlawed\htmLawed::htmLawed($headerSource, array('tidy'=>'1t1')); 
 	    $headerSource = $this->beautifyHtml($headerSource);
@@ -690,14 +609,15 @@ use yii\helpers\Url;
 	    $this->save($fileSaveName, $headerSource);
 	}
 
-	if (!empty($this->contentSelector) && !empty($html->find($this->contentSelector, 0)->innertext)) {
+	$contentSource = pq($this->contentSelector)->html();
+	if (!empty($this->contentSelector) && !empty($contentSource)) {
 //	    $contentSource = $html->find($this->contentSelector, 0)->innertext;
-	    $html->find($this->contentSelector, 0)->innertext = '{CONTENT}';
+	    $html[$this->contentSelector] = '{CONTENT}';
 	}
 
-	if (!empty($this->footerSelector) && !empty($html->find($this->footerSelector, 0)->innertext)) {
-	    $footerSource = $html->find($this->footerSelector, 0)->innertext;
-	    $html->find($this->footerSelector, 0)->innertext = '{INCLUDEFOOTER}';
+	$footerSource = pq($this->footerSelector)->html();
+	if (!empty($this->footerSelector) && !empty($footerSource)) {
+	    $html[$this->footerSelector] = '{HEADERINCLUDE}';
 	    $footerSource = $this->beautifyHtml($footerSource);
 	    $fileSaveName = Yii::getAlias('@app/views/layouts/' . $this->layoutGeneral . '_footer.php');
 	    $footerSource = strtr($footerSource, $this->urlReplace);
@@ -707,15 +627,17 @@ use yii\helpers\Url;
 	}
 
 
-	$html->set_callback('serhatozles\themeintegrator\Controller::StyleRemover');
+//	$html->set_callback('serhatozles\themeintegrator\Controller::StyleRemover');
+	pq('link')->remove();
+	pq('script')->remove();
 
-	$html->find('html', 0)->lang = '{HTMLLANG}';
-	$html->find('title', 0)->innertext = '{HTMLTITLE}';
-	$html->find('head', 0)->innertext .= '{CSRFMETA}';
-	$html->find('body', 0)->innertext = '{BEGINBODY}' . $html->find('body', 0)->innertext;
-	$html->find('body', 0)->innertext .= '{ENDBODY}';
+	pq('html')->attr('lang', '{HTMLLANG}');
+	pq('title')->html('{HTMLTITLE}');
+	pq('head')->append('{CSRFMETA}');
+	pq('body')->prepend('{BEGINBODY}');
+	pq('body')->append('{ENDBODY}');
 
-	$htmlresult = $html->save();
+	$htmlresult = "" . $html;
 	$htmlresult = $this->beautifyHtml($htmlresult);
 	$htmlresult = str_replace('{HEADERINCLUDE}', '<?php echo $this->render("' . $this->layoutGeneral . '_header"); ?>', $htmlresult);
 	$htmlresult = str_replace('{CONTENT}', '<?php echo $content ?>', $htmlresult);
@@ -744,22 +666,7 @@ use yii\helpers\Html;
 
 	$htmlresult .= '<?php $this->endPage() ?>';
 
-	$html->clear();
-	unset($html);
-
 	return $htmlresult;
-    }
-
-    public static function StyleRemover($element) {
-
-	if ($element->tag == 'link') {
-	    $element->outertext = '';
-	}
-
-//	if ($element->tag == 'script' && !empty($element->src)) {
-	if ($element->tag == 'script') {
-	    $element->outertext = '';
-	}
     }
 
     private function generateLayout() {
@@ -955,21 +862,18 @@ $this->title = "' . $actionListName . '";
 
     function getAssets($Source) {
 
-	$html = SimpleHTMLDom::str_get_html($Source);
+	$html = \phpQuery::newDocumentHTML($Source, "UTF-8");
 	$Links = [];
 
-	foreach ($html->find('link[rel=stylesheet]') as $link) {
+	foreach (pq($html)->find('link[rel=stylesheet]') as $link) {
 
-	    $Links[] = $link->href;
+	    $Links[] = pq($link)->attr('href');
 	}
+	
+	foreach (pq($html)->find('script') as $link) {
 
-	foreach ($html->find('script') as $link) {
-
-	    $Links[] = $link->src;
+	    $Links[] = pq($link)->attr('src');
 	}
-
-	$html->clear();
-	unset($html);
 
 	return array_values(array_filter($Links));
     }
