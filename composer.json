@@ -11,7 +11,6 @@
         }
     ],
     "require": {
-	"serhatozles/yii2-simplehtmldom": "dev-master",
 	"kartik-v/yii2-helpers": "dev-master"
     },
     "autoload": {
