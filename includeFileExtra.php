@@ -1,27 +1,85 @@
 <?php ob_start(); ?>
 <script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
 <script>
+//    jQuery.fn.getPath = function () {
+//	if (this.length != 1)
+//	    throw 'Requires one element.';
+//
+//	var path, node = this;
+//	while (node.length) {
+//	    var realNode = node[0], name = realNode.localName;
+//	    if (!name)
+//		break;
+//	    name = name.toLowerCase();
+//	    var parent = node.parent();
+//	    var siblings = parent.children(name);
+//	    if (siblings.length > 1 && siblings.index(realNode) > 0) {
+////            name += '[' + siblings.index(realNode) + ']';
+//		name += ':eq(' + siblings.index(realNode) + ')';
+//	    }
+//
+//	    path = name + (path ? '>' + path : '');
+//	    node = parent;
+//	}
+//
+//	return path;
+//    };
+    
     jQuery.fn.getPath = function () {
-	if (this.length != 1)
-	    throw 'Requires one element.';
+//	if (this.length != 1)
+//	    throw 'Requires one element.';
 
-	var path, node = this;
+	var path, node = this, pathLink = "", returnPath = {}, pathArray = new Array();
+	var lastidClassCheck = 0,
+		idClassCheck = 0;
+	var cik = 0;
 	while (node.length) {
-	    var realNode = node[0], name = realNode.localName;
+	    var realNode = node[0], name = realNode.localName, nameLink = realNode.localName, eqCheck = false, eqIndex = 0;
 	    if (!name)
 		break;
 	    name = name.toLowerCase();
+	    idClassCheck = 0;
+	    if (typeof realNode.id !== 'undefined' && realNode.id !== '') {
+		name = name + '#' + realNode.id;
+		nameLink = nameLink + '#' + realNode.id;
+		idClassCheck = 1;
+		cik = 1;
+	    } else if (typeof realNode.className !== 'undefined' && realNode.className !== '') {
+		var classpath = realNode.className.split(" ");
+		if(!(jQuery('.' + classpath[0]).length > 1)){
+		    name = name + '.' + classpath[0];
+		    nameLink = nameLink + '.' + classpath[0];
+		    idClassCheck = 1;
+		    cik = 1;
+		}
+	    }
+	    //	    alert(realNode.id);
+	    //	    alert(realNode.className);
 	    var parent = node.parent();
 	    var siblings = parent.children(name);
-	    if (siblings.length > 1 && siblings.index(realNode) > 0) {
-//            name += '[' + siblings.index(realNode) + ']';
+//	    if ((siblings.length > 1 && type == 'many') || (type == 'one')) {// && siblings.index(realNode) > 0
+	    if (siblings.length > 1) {// && siblings.index(realNode) > 0
+		//            name += '[' + siblings.index(realNode) + ']';
 		name += ':eq(' + siblings.index(realNode) + ')';
+		eqCheck = true;
+		eqIndex = siblings.index(realNode);
+//		nameLink += '<select style="color:#000;margin-left:3px;">';
+//		nameLink += '<option value="all">All</option>';
+//		for (var i = 0; i < siblings.length; i++) {
+//		    nameLink += '<option ' + (i == siblings.index(realNode) ? 'selected="selected"' : '') + '>' + i + '</option>';
+//		}
+//		nameLink += '</select>';
 	    }
 
-	    path = name + (path ? '>' + path : '');
+	    //	    path = name + (path ? (path.substring(0, 1) == '#' || path.substring(0, 1) == '.' ? ' ' : ' > ') + path : '');
+
+	    path = name + (path ? (lastidClassCheck == 1 ? ' ' : ' > ') + path : '');
+
+	    if(cik == 1) break;
+
+	    lastidClassCheck = idClassCheck;
 	    node = parent;
 	}
-
 	return path;
     };
     $("*").click(function () {
