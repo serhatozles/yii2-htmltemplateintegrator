@@ -211,7 +211,7 @@ class Controller extends BaseController {
 		$this->headerSelector = $post['headerselector'];
 		$this->contentSelector = $post['contentselector'];
 		$this->footerSelector = $post['footerselector'];
-		$controllerName = $post['controllerName'];
+//		$controllerName = $post['controllerName'];
 		$controllerAction = $post['controllerAction'];
 		$modelGenerateAction = $post['modelGenerateAction'];
 		$modelGenerateOriginalName = $post['modelGenerateOriginalName'];
@@ -327,10 +327,10 @@ class Controller extends BaseController {
 
 		$message = "Successful\r\n";
 		$message .= "You need to put assets files into '<strong>assets/" . $folderName . "</strong>'\r\n";
-		for ($i = 0; $i < count($controllerName); $i++):
-		    $controllerlink = Url::to(['/' . strtolower($controllerName[$i])]);
-		    $message .= "See: " . Html::a($controllerlink, $controllerlink, ['target' => '_blank']) . "\r\n";
-		endfor;
+//		for ($i = 0; $i < count($controllerName); $i++):
+//		    $controllerlink = Url::to(['/' . strtolower($controllerName[$i])]);
+//		    $message .= "See: " . Html::a($controllerlink, $controllerlink, ['target' => '_blank']) . "\r\n";
+//		endfor;
 
 		$results = "";
 		foreach ($this->generatedFiles as $genFile):
