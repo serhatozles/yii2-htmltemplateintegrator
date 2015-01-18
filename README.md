@@ -1,5 +1,6 @@
 HTML Template Integrator
 ========================
+[![PayPal Donate](https://www.paypalobjects.com/en_US/i/btn/btn_donate_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=6A78J4T2DYBV4)
 [![Latest Stable Version](https://poser.pugx.org/serhatozles/yii2-htmltemplateintegrator/v/stable.svg)](https://packagist.org/packages/serhatozles/yii2-htmltemplateintegrator) [![Total Downloads](https://poser.pugx.org/serhatozles/yii2-htmltemplateintegrator/downloads.svg)](https://packagist.org/packages/serhatozles/yii2-htmltemplateintegrator) [![Latest Unstable Version](https://poser.pugx.org/serhatozles/yii2-htmltemplateintegrator/v/unstable.svg)](https://packagist.org/packages/serhatozles/yii2-htmltemplateintegrator) [![License](https://poser.pugx.org/serhatozles/yii2-htmltemplateintegrator/license.svg)](https://packagist.org/packages/serhatozles/yii2-htmltemplateintegrator)
 ------------
 Installation
